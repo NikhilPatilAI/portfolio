@@ -68,7 +68,8 @@ export default function Image() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <SpectrumBar width={340} />
-            <div style={{ display: 'flex', fontSize: 26, fontWeight: 700 }}>{new URL(site.url).host}</div>
+            {/* A white backing keeps the address readable over the map's dots. */}
+            <div style={{ display: 'flex', fontSize: 26, fontWeight: 700, background: '#ffffff', padding: '6px 14px', borderRadius: 999 }}>{new URL(site.url).host}</div>
           </div>
         </div>
       </div>
