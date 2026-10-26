@@ -26,6 +26,9 @@ export function Hero() {
             <div className="hero-ctas">
               <a className="btn btn-ink" href="#work">
                 View work
+                <span className="btn-arrow" aria-hidden="true">
+                  ↓
+                </span>
               </a>
               <Link className="btn btn-soft" href="/resume" data-track="resume_download" data-track-format="page">
                 Resume

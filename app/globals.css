@@ -7,6 +7,7 @@
   --color-ink: #111318;
   --color-ink-soft: #3b3f48;
   --color-paper: #ffffff;
+  --color-paper-2: #f3f4f7;
   --color-line: #e4e7ef;
 
   --color-s1: #ff4d4d;
@@ -198,13 +199,30 @@
   .btn-ink {
     position: relative;
     overflow: hidden;
+    isolation: isolate;
     background: var(--color-ink);
     color: var(--color-paper);
+    box-shadow: 0 8px 18px -12px rgba(17, 19, 24, 0.7);
+  }
+  /* On hover the button lifts, its shadow deepens and a soft light sweeps across it once. */
+  .btn-ink::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 32%, rgba(255, 255, 255, 0.26) 50%, transparent 68%);
+    translate: -110% 0;
+    pointer-events: none;
+  }
+  .btn-ink:hover::after,
+  .btn-ink:focus-visible::after {
+    translate: 110% 0;
+    transition: translate 0.8s var(--ease-move);
   }
   .btn-ink:hover,
   .btn-ink:focus-visible {
-    background: var(--rainbow);
-    color: var(--color-ink);
+    translate: 0 -2px;
+    box-shadow: 0 18px 32px -14px rgba(17, 19, 24, 0.75);
   }
   .btn-soft {
     background: var(--color-paper);
@@ -212,7 +230,24 @@
     box-shadow: inset 0 0 0 2px var(--color-ink);
   }
   .btn-soft:hover {
+    translate: 0 -2px;
     background: var(--color-t-sky);
+    box-shadow:
+      inset 0 0 0 2px var(--color-ink),
+      0 16px 28px -16px rgba(17, 19, 24, 0.55);
+  }
+  .btn:active {
+    translate: 0 0;
+    scale: 0.97;
+  }
+  /* The arrow points where the button goes, and leans that way on hover. */
+  .btn-arrow {
+    display: inline-block;
+    transition: translate 0.35s var(--ease-pop);
+  }
+  .btn:hover .btn-arrow,
+  .btn:focus-visible .btn-arrow {
+    translate: 0 3px;
   }
   .section {
     padding-block: clamp(84px, 11vw, 150px);
@@ -478,19 +513,18 @@
   .keep {
     white-space: nowrap;
   }
-  /* Phones: the stage buttons sit at the top of the lab, clear of the floating Story or Quick view switch. */
+  /* Phones: the readout sits under the caption, and the stage buttons wrap into two rows below the drawing, raised
+     clear of the floating Story or Quick view switch when the lab's foot meets the bottom of the screen. */
   @media (max-width: 559px) {
     .lab {
-      height: 520px;
+      height: 600px;
     }
     .lab-hud {
       margin-left: 0;
       text-align: left;
     }
     .lab-stages {
-      top: 64px;
-      bottom: auto;
-      justify-content: flex-start;
+      bottom: 72px;
     }
   }
   /* Without JavaScript there is no lab to run, so the copy takes the whole width. */
@@ -713,10 +747,16 @@
   .card-title a {
     text-decoration: none;
   }
+  /* The title link covers the whole card, so a click anywhere on it opens the case study. The copy sits under that
+     cover; only the receipts and plain-words terms rise above it, so they still open their proofs. */
   .card-title a::after {
     content: '';
     position: absolute;
     inset: -600px;
+  }
+  .card .receipt {
+    position: relative;
+    z-index: 2;
   }
   .card-title a:focus-visible {
     outline: none;
@@ -727,14 +767,12 @@
   }
   .card-kicker {
     position: relative;
-    z-index: 1;
     margin: 0;
     font: 700 1.08rem/1.35 var(--font-sans);
     max-width: 32ch;
   }
   .card-line {
     position: relative;
-    z-index: 2;
     margin: 0;
     font-size: 1rem;
     line-height: 1.6;
@@ -742,7 +780,6 @@
   }
   .card-stack {
     position: relative;
-    z-index: 2;
     list-style: none;
     margin: 0;
     padding: 0 72px 0 0;
@@ -2463,7 +2500,9 @@
     transition:
       background-color 0.3s var(--ease-move),
       color 0.3s var(--ease-move),
-      box-shadow 0.3s var(--ease-move);
+      box-shadow 0.3s var(--ease-move),
+      translate 0.35s var(--ease-pop),
+      scale 0.2s var(--ease-move);
   }
   .socials a,
   .hub a {
@@ -2532,10 +2571,26 @@
     scale: 1;
   }
 
-  /* Cursor: fine pointers only, added by the motion layer */
+  /* Cursor: fine pointers only, added by the motion layer. A dot that sits exactly on the pointer, and a ring with
+     crosshair ticks, like the query in the hero lab, that glides after it and locks on to anything you can click.
+     Black by default, it takes each section's color as you scroll; a fine white outline keeps it visible on color. */
   html.fine,
   html.fine * {
     cursor: none !important;
+  }
+  /* Typing, the palette and popovers keep the system cursor: the custom one can't sit above the browser's top layer. */
+  html.fine :is(input:not([type='button'], [type='submit'], [type='checkbox'], [type='radio']), textarea, [contenteditable='true']) {
+    cursor: text !important;
+  }
+  html.fine :is(dialog[open], [popover]:popover-open),
+  html.fine :is(dialog[open], [popover]:popover-open) * {
+    cursor: auto !important;
+  }
+  html.fine :is(dialog[open], [popover]:popover-open) :is(a, button, [role='option'], summary, label) {
+    cursor: pointer !important;
+  }
+  html.fine :is(dialog[open], [popover]:popover-open) :is(input:not([type='button'], [type='submit']), textarea) {
+    cursor: text !important;
   }
   #cursor {
     position: fixed;
@@ -2544,31 +2599,134 @@
     z-index: 95;
     pointer-events: none;
     opacity: 0;
-    will-change: transform;
+    color: var(--cur, var(--color-ink));
+    transition:
+      opacity 0.2s var(--ease-move),
+      color 0.3s var(--ease-move);
   }
+  #cursor.is-on {
+    opacity: 1;
+  }
+  #cursor.is-native {
+    opacity: 0;
+  }
+  .cursor-ring,
   .cursor-dot {
     position: absolute;
-    width: 14px;
-    height: 14px;
-    margin: -7px 0 0 -7px;
+    left: 0;
+    top: 0;
+    will-change: transform;
+  }
+  .cursor-reticle {
+    position: absolute;
+    left: -24px;
+    top: -24px;
+    width: 48px;
+    height: 48px;
+    overflow: visible;
+    fill: none;
+    stroke-linecap: round;
+    transition:
+      transform 0.4s var(--ease-pop),
+      opacity 0.2s var(--ease-move);
+  }
+  .cursor-reticle .shade {
+    stroke: rgba(255, 255, 255, 0.85);
+    stroke-width: 3.6;
+  }
+  .cursor-reticle .line {
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+  .cursor-reticle .line circle {
+    fill: transparent;
+    transition: fill 0.25s var(--ease-move);
+  }
+  .cursor-dot i {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background: var(--cur, var(--color-ink));
-    box-shadow: 0 0 0 3px var(--color-paper);
+    background: currentColor;
+    box-shadow: 0 0 0 2px #fff;
+    transition: transform 0.3s var(--ease-pop);
   }
   .cursor-pill {
     position: absolute;
+    left: -40px;
+    top: -40px;
     width: 80px;
     height: 80px;
-    margin: -40px 0 0 -40px;
     border-radius: 50%;
-    background: var(--cur, var(--color-ink));
-    color: var(--color-paper);
+    background: currentColor;
     display: grid;
     place-items: center;
-    font: 800 0.86rem/1 var(--font-sans);
     opacity: 0;
     transform: scale(0.4);
-    box-shadow: 0 0 0 3px var(--color-paper);
+    box-shadow:
+      0 0 0 2px #fff,
+      0 10px 24px -10px rgba(17, 19, 24, 0.6);
+    transition:
+      transform 0.5s var(--ease-pop),
+      opacity 0.25s var(--ease-move);
+  }
+  .cursor-pill span {
+    color: var(--color-paper);
+    font: 800 0.86rem/1 var(--font-sans);
+  }
+  /* Over something clickable the ring widens, turns its ticks 45 degrees and fills faintly: locked on. */
+  .is-link .cursor-reticle {
+    transform: scale(1.3) rotate(45deg);
+  }
+  .is-link .cursor-reticle .line circle {
+    fill: color-mix(in srgb, currentColor 12%, transparent);
+  }
+  .is-link .cursor-dot i {
+    transform: scale(0.6);
+  }
+  .is-down .cursor-reticle {
+    transform: scale(0.8);
+  }
+  .is-link.is-down .cursor-reticle {
+    transform: scale(1.1) rotate(45deg);
+  }
+  /* Over projects, receipts and episodes the ring gives way to a labelled pill. */
+  .is-label .cursor-reticle {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  .is-label .cursor-dot i {
+    transform: scale(0);
+  }
+  .is-label .cursor-pill {
+    opacity: 1;
+    transform: scale(1);
+  }
+  /* A click sends a ring out from the dot, like a tap in the lab's Embed stage. */
+  .cursor-ripple {
+    position: absolute;
+    left: -18px;
+    top: -18px;
+    width: 36px;
+    height: 36px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.7),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+    animation: cursor-ripple 0.55s var(--ease-move) forwards;
+  }
+  @keyframes cursor-ripple {
+    from {
+      scale: 0.4;
+      opacity: 0.7;
+    }
+    to {
+      scale: 2.4;
+      opacity: 0;
+    }
   }
 
   /* Command palette and shortcuts */
@@ -2667,6 +2825,173 @@
     border-top: 1px solid var(--color-line);
     font: 600 0.72rem/1.4 var(--font-mono);
     color: var(--color-ink-soft);
+  }
+  /* Ask Nikhil, inside the palette: questions in ink, answers on a soft grape, an AI label always in view */
+  .ask {
+    display: flex;
+    flex-direction: column;
+    max-height: min(552px, calc(100svh - 56px));
+  }
+  .ask-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .ask-back {
+    border: 0;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: var(--color-line);
+    color: var(--color-ink-soft);
+    font: 600 0.74rem/1 var(--font-mono);
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .ask-title {
+    margin: 0;
+    font: 800 1.05rem/1.2 var(--font-sans);
+    white-space: nowrap;
+  }
+  .ask-badge {
+    margin-left: auto;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: var(--color-t-grape);
+    font: 600 0.68rem/1 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .ask-log {
+    flex: 1;
+    min-height: 150px;
+    overflow: auto;
+    display: grid;
+    align-content: start;
+    gap: 18px;
+    padding: 16px 22px;
+  }
+  .ask-intro p {
+    margin: 0 0 12px;
+    color: var(--color-ink-soft);
+  }
+  .ask-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ask-chips button {
+    border: 0;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: var(--color-t-sky);
+    color: var(--color-ink);
+    font: 700 0.9rem/1.25 var(--font-sans);
+    text-align: left;
+    cursor: pointer;
+  }
+  .ask-chips button:nth-child(2) {
+    background: var(--color-t-mint);
+  }
+  .ask-chips button:nth-child(3) {
+    background: var(--color-t-sun);
+  }
+  .ask-turn {
+    display: grid;
+    gap: 8px;
+  }
+  .ask-q {
+    justify-self: end;
+    max-width: 85%;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 18px 18px 6px 18px;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-weight: 700;
+  }
+  .ask-a {
+    max-width: 92%;
+    padding: 12px 16px;
+    border-radius: 18px 18px 18px 6px;
+    background: var(--color-t-grape);
+    line-height: 1.55;
+  }
+  .ask-a p,
+  .ask-a ul {
+    margin: 0 0 8px;
+  }
+  .ask-a > :last-child {
+    margin-bottom: 0;
+  }
+  .ask-a ul {
+    padding-left: 18px;
+    list-style: disc;
+  }
+  .ask-a a {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .ask-caret {
+    display: inline-block;
+    width: 8px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: var(--color-ink);
+    animation: ask-caret 1s steps(2) infinite;
+  }
+  @keyframes ask-caret {
+    50% {
+      opacity: 0;
+    }
+  }
+  .ask-note {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--color-t-sun);
+    font-size: 0.92rem;
+  }
+  .ask-form {
+    display: flex;
+    gap: 8px;
+    padding: 12px 14px 12px 22px;
+    border-top: 1px solid var(--color-line);
+  }
+  .ask-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink);
+    font: 700 1.05rem/1.3 var(--font-sans);
+    outline: none;
+  }
+  .ask-send {
+    border: 0;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font: 800 0.9rem/1 var(--font-sans);
+    cursor: pointer;
+  }
+  .ask-send:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .ask-foot {
+    display: block;
+  }
+  .ask-foot a {
+    color: inherit;
+    font-weight: 700;
   }
   .shortcut-list {
     display: grid;

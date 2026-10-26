@@ -8,17 +8,17 @@ const onAzure = experience.every((r) => r.summary.includes('Azure'));
 
 export function Experience() {
   return (
-    <section className="section gutter" id="experience" aria-labelledby="experienceTitle" style={{ background: 'var(--color-t-lime)' }} data-cur="var(--color-lime-d)">
+    <section className="section gutter" id="experience" aria-labelledby="experienceTitle" style={{ background: 'var(--color-t-mint)' }} data-cur="var(--color-mint-d)">
       <div className="inner">
         <div className="section-head">
-          <span className="tag" style={tint('lime')}>
+          <span className="tag" style={tint('mint')}>
             {sections.experience.tag}
           </span>
           <h2 className="section-title" id="experienceTitle">
             {sections.experience.title}
           </h2>
           <p className="section-sub">{sections.experience.sub}</p>
-          <SectionHud hue="lime" items={[`${experience.length} roles`, ...(onAzure ? ['Azure in every role'] : []), `${education.length} degrees`, `${certifications.length} certifications`]} />
+          <SectionHud hue="mint" items={[`${experience.length} roles`, ...(onAzure ? ['Azure in every role'] : []), `${education.length} degrees`, `${certifications.length} certifications`]} />
         </div>
         <ol className="timeline">
           {experience.map((r) => (

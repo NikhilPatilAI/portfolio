@@ -233,8 +233,8 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
     const y1 = y * cp - z1 * sp;
     const z2 = y * sp + z1 * cp;
     const k = FOV / (FOV + z2);
-    // When the stage buttons sit at the top of the lab, the drawing centres lower.
-    return [W / 2 + x1 * unit * k, H * (barAtTop ? 0.6 : 0.47) + y1 * unit * k, k, z2];
+    // The drawing centres in the room the stage buttons leave: lower when they sit on top, higher on a phone's tall lab.
+    return [W / 2 + x1 * unit * k, H * (barAtTop ? 0.6 : phone ? 0.42 : 0.47) + y1 * unit * k, k, z2];
   }
 
   /* ---------- Particles ---------- */

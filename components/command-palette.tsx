@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { podcast, projects, site, socials, type Hue } from '@/data/content';
+import { AskPanel } from './ask-panel';
 import { isMotionReduced, toggleMotion } from '@/lib/motion-pref';
 import { tint } from '@/lib/style';
 import { track } from '@/lib/track';
@@ -15,7 +16,8 @@ type Action =
   | { kind: 'resume'; format: 'page' | 'pdf' }
   | { kind: 'copy' }
   | { kind: 'motion' }
-  | { kind: 'help' };
+  | { kind: 'help' }
+  | { kind: 'ask'; question?: string };
 
 interface Command {
   label: string;
@@ -27,6 +29,7 @@ interface Command {
 
 const shortcuts: [string, string][] = [
   ['⌘K or Ctrl+K', 'Open this command palette'],
+  ['A', 'Ask Nikhil a question'],
   ['?', 'Show these shortcuts'],
   ['Q', 'Switch between Story and Quick view'],
   ['M', 'Turn motion on or off'],
@@ -35,6 +38,7 @@ const shortcuts: [string, string][] = [
 
 function listCommands(copied: boolean, reduced: boolean): Command[] {
   return [
+    { label: 'Ask Nikhil a question', hint: 'AI', hue: 'grape', keywords: 'ai chat assistant question answer', action: { kind: 'ask' } },
     { label: 'Selected work', hint: 'Section', hue: 'sky', keywords: 'projects', action: { kind: 'go', href: '/#work' } },
     ...projects.map<Command>((p) => ({ label: `${p.title} case study`, hint: 'Project', hue: p.hue, keywords: p.fullTitle, action: { kind: 'go', href: `/work/${p.slug}`, project: p.slug } })),
     { label: 'About me', hint: 'Section', hue: 'grape', action: { kind: 'go', href: '/#about' } },
@@ -58,7 +62,10 @@ function listCommands(copied: boolean, reduced: boolean): Command[] {
   ];
 }
 
-/** ⌘K: jump anywhere, copy the email, switch views or motion. Built on the native <dialog>, so focus and Esc just work. */
+// Typing something that reads like a question offers to ask it, above the matching commands.
+const looksLikeQuestion = (q: string) => q.includes('?') || q.split(/\s+/).length >= 3;
+
+/** ⌘K: jump anywhere, copy the email, switch views or motion, or ask a question. Built on the native <dialog>, so focus and Esc just work. */
 export default function CommandPalette({ mode, onMode, onClose }: { mode: PaletteMode; onMode: (m: PaletteMode) => void; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const router = useRouter();
@@ -67,16 +74,23 @@ export default function CommandPalette({ mode, onMode, onClose }: { mode: Palett
   const [active, setActive] = useState(0);
   const [copied, setCopied] = useState(false);
   const [reduced] = useState(isMotionReduced);
+  const [question, setQuestion] = useState<string>();
 
   useEffect(() => {
     const d = dialog.current;
-    if (d && !d.open) d.showModal();
+    if (!d || d.open) return;
+    d.showModal();
+    // showModal focuses the first control it finds; the text box is where typing should start.
+    d.querySelector<HTMLInputElement>('.ask-input, .palette-search')?.focus();
   }, []);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     const all = listCommands(copied, reduced);
-    return q ? all.filter((c) => `${c.label} ${c.keywords ?? ''} ${c.hint}`.toLowerCase().includes(q)) : all;
+    if (!q) return all;
+    const found = all.filter((c) => `${c.label} ${c.keywords ?? ''} ${c.hint}`.toLowerCase().includes(q));
+    const askIt: Command = { label: `Ask Nikhil: “${query.trim()}”`, hint: 'AI', hue: 'grape', action: { kind: 'ask', question: query.trim() } };
+    return looksLikeQuestion(q) || !found.length ? [askIt, ...found] : found;
   }, [query, copied, reduced]);
   const current = Math.min(active, Math.max(0, results.length - 1));
 
@@ -134,6 +148,10 @@ export default function CommandPalette({ mode, onMode, onClose }: { mode: Palett
       case 'help':
         onMode('help');
         break;
+      case 'ask':
+        setQuestion(action.question);
+        onMode('ask');
+        break;
     }
   }
 
@@ -154,14 +172,16 @@ export default function CommandPalette({ mode, onMode, onClose }: { mode: Palett
     <dialog
       ref={dialog}
       className="palette"
-      aria-label={mode === 'palette' ? 'Command palette' : 'Keyboard shortcuts'}
+      aria-label={mode === 'palette' ? 'Command palette' : mode === 'ask' ? 'Ask Nikhil' : 'Keyboard shortcuts'}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === e.currentTarget) e.currentTarget.close();
       }}
     >
       <div className="palette-stripe" aria-hidden="true" />
-      {mode === 'palette' ? (
+      {mode === 'ask' ? (
+        <AskPanel initial={question} onBack={() => onMode('palette')} onNavigate={() => dialog.current?.close()} />
+      ) : mode === 'palette' ? (
         <>
           <input
             className="palette-search"
@@ -199,7 +219,7 @@ export default function CommandPalette({ mode, onMode, onClose }: { mode: Palett
               ))}
             </ul>
           ) : (
-            <p className="palette-empty">Nothing matches. Try “resume”, “Legal Bot” or “email”.</p>
+            <p className="palette-empty">Nothing matches. Try “resume”, “Legal Bot” or “email”, or ask a question.</p>
           )}
           <p className="palette-foot">
             <span>

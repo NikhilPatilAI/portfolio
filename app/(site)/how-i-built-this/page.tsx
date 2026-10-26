@@ -36,6 +36,15 @@ const parts = [
     ],
   },
   {
+    // DRAFT
+    title: 'Ask Nikhil, from this site only',
+    hue: 'grape',
+    body: [
+      'The command palette answers questions about me with NVIDIA Nemotron, a free open model, through OpenRouter. It reads only what this site says, about 8,000 tokens in its prompt, so there is no vector database to drift out of date.',
+      'Answers stream in, carry an AI label, link only to pages that exist, and point to my email instead of guessing. Each visitor gets a few questions every ten minutes, and the whole site has a daily ceiling.',
+    ],
+  },
+  {
     title: 'Static by default',
     hue: 'mango',
     body: [

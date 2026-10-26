@@ -3,7 +3,7 @@ import { tint } from '@/lib/style';
 
 export function Beyond() {
   return (
-    <section className="section gutter" id="beyond" aria-labelledby="beyondTitle" style={{ background: 'var(--color-t-mint)' }} data-cur="var(--color-mint-d)">
+    <section className="section gutter" id="beyond" aria-labelledby="beyondTitle" style={{ background: 'var(--color-paper-2)' }} data-cur="var(--color-mint-d)">
       <div className="inner">
         <div className="section-head">
           <span className="tag" style={tint('mint')}>

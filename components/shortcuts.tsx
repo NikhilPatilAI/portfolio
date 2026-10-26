@@ -10,13 +10,13 @@ import { track } from '@/lib/track';
 // The palette's code loads only when someone opens it.
 const CommandPalette = dynamic(() => import('./command-palette'), { ssr: false });
 
-export type PaletteMode = 'palette' | 'help';
+export type PaletteMode = 'palette' | 'help' | 'ask';
 
 const typing = (el: EventTarget | null) => el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 
 let greeted = false;
 
-/** Keyboard shortcuts for the whole site: ⌘K or Ctrl+K, ?, Q and M. Also says hello in the console, once per visit. */
+/** Keyboard shortcuts for the whole site: ⌘K or Ctrl+K, ?, A, Q and M. Also says hello in the console, once per visit. */
 export function Shortcuts() {
   const [mode, setMode] = useState<PaletteMode | null>(null);
   const router = useRouter();
@@ -42,6 +42,9 @@ export function Shortcuts() {
       if (e.key === '?') {
         e.preventDefault();
         setMode('help');
+      } else if (e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        setMode('ask');
       } else if (e.key.toLowerCase() === 'q') {
         const quick = new URLSearchParams(window.location.search).get('view') === 'quick';
         try {

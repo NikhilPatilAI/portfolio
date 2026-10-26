@@ -6,7 +6,7 @@ import { tint } from '@/lib/style';
 
 export function Stack() {
   return (
-    <section className="section gutter" id="stack" aria-labelledby="stackTitle" style={{ background: 'var(--color-t-mango)' }} data-cur="var(--color-mango-d)">
+    <section className="section gutter" id="stack" aria-labelledby="stackTitle" data-cur="var(--color-mango-d)">
       <div className="inner">
         <div className="section-head">
           <span className="tag" style={tint('mango')}>

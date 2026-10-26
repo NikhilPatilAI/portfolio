@@ -73,53 +73,115 @@ function onAnchorClick(e: MouseEvent) {
   lenis?.scrollTo(target, { offset: target === 0 ? 0 : HEADER_OFFSET, duration: 1.3 });
 }
 
-/* ---------- Cursor: a dot that takes the section's color, and a labelled pill over projects, proofs and episodes ---------- */
+/* ---------- Cursor: a dot on the pointer, black until a section gives it a color, a query ring that locks on to links, and a labelled pill over projects, proofs and episodes ---------- */
 
 function startCursor() {
   const cursor = document.createElement('div');
   cursor.id = 'cursor';
   cursor.setAttribute('aria-hidden', 'true');
-  cursor.innerHTML = '<div class="cursor-dot"></div><div class="cursor-pill"><span>View</span></div>';
+  cursor.innerHTML =
+    '<div class="cursor-ring"><svg class="cursor-reticle" viewBox="-24 -24 48 48"><g class="shade"><circle r="16"/><path d="M0-24v6M0 18v6M-24 0h6M18 0h6"/></g><g class="line"><circle r="16"/><path d="M0-24v6M0 18v6M-24 0h6M18 0h6"/></g></svg><div class="cursor-pill"><span>View</span></div></div><div class="cursor-dot"><i></i></div>';
   document.body.appendChild(cursor);
   document.documentElement.classList.add('fine');
+  const ring = cursor.querySelector('.cursor-ring') as HTMLElement;
   const dot = cursor.querySelector('.cursor-dot') as HTMLElement;
-  const pill = cursor.querySelector('.cursor-pill') as HTMLElement;
-  const label = pill.querySelector('span') as HTMLElement;
-  const x = gsap.quickTo(cursor, 'x', { duration: 0.25, ease: 'power3.out' });
-  const y = gsap.quickTo(cursor, 'y', { duration: 0.25, ease: 'power3.out' });
+  const label = cursor.querySelector('.cursor-pill span') as HTMLElement;
   const labels: Record<string, string> = { view: 'View', proof: 'Proof', play: 'Play' };
-  let state = 'default';
-  let visible = false;
+
+  // Where the pointer is, where the dot was last drawn, and where the ring has glided to.
+  let px = 0;
+  let py = 0;
+  let dx = NaN;
+  let dy = NaN;
+  let rx = 0;
+  let ry = 0;
+  let on = false;
   window.addEventListener(
     'pointermove',
     (e) => {
       if (e.pointerType !== 'mouse') return;
-      x(e.clientX);
-      y(e.clientY);
-      if (visible) return;
-      visible = true;
-      gsap.to(cursor, { autoAlpha: 1, duration: 0.2, overwrite: 'auto' });
+      px = e.clientX;
+      py = e.clientY;
+      if (on) return;
+      on = true;
+      rx = px;
+      ry = py;
+      cursor.classList.add('is-on');
     },
     { passive: true },
   );
   document.documentElement.addEventListener('mouseleave', () => {
-    visible = false;
-    gsap.to(cursor, { autoAlpha: 0, duration: 0.2, overwrite: 'auto' });
+    on = false;
+    cursor.classList.remove('is-on', 'is-down');
   });
-  document.addEventListener('pointerover', (e) => {
-    const t = (e.target as Element).closest('[data-cursor], a, button, input, [role="option"]') as HTMLElement | null;
-    const next = t ? t.dataset.cursor ?? 'link' : 'default';
-    if (next === state) return;
-    state = next;
-    if (labels[next]) {
-      label.textContent = labels[next];
-      gsap.to(dot, { scale: 0, duration: 0.2, overwrite: 'auto' });
-      gsap.to(pill, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(2)', overwrite: 'auto' });
-    } else {
-      gsap.to(pill, { scale: 0.4, opacity: 0, duration: 0.25, overwrite: 'auto' });
-      gsap.to(dot, { scale: next === 'link' ? 2.6 : 1, duration: 0.4, ease: 'back.out(2)', overwrite: 'auto' });
+
+  // Once a frame: the dot jumps to the pointer, so it never lags; the ring eases after it, at the same speed on
+  // any refresh rate. Nothing is written when nothing moved.
+  gsap.ticker.add((_time, deltaTime) => {
+    if (!on) return;
+    if (px !== dx || py !== dy) {
+      dx = px;
+      dy = py;
+      dot.style.transform = `translate3d(${px}px, ${py}px, 0)`;
     }
+    const gapX = px - rx;
+    const gapY = py - ry;
+    if (Math.abs(gapX) < 0.05 && Math.abs(gapY) < 0.05) return;
+    const k = 1 - Math.pow(0.75, deltaTime / 16.667);
+    rx += gapX * k;
+    ry += gapY * k;
+    ring.style.transform = `translate3d(${rx.toFixed(2)}px, ${ry.toFixed(2)}px, 0)`;
   });
+
+  // The palette, receipts and glosses sit in the browser's top layer, above anything a page can draw, and text
+  // fields want a caret. Over those the custom cursor steps aside for the system one.
+  const topLayer = (el: Element) => {
+    if (el.closest('dialog[open]')) return true;
+    const pop = el.closest('[popover]');
+    try {
+      return !!pop?.matches(':popover-open');
+    } catch {
+      return false;
+    }
+  };
+  let state = '';
+  const set = (next: string) => {
+    if (next === state) return;
+    if (state) cursor.classList.remove(`is-${state}`);
+    if (next) cursor.classList.add(`is-${next}`);
+    state = next;
+  };
+  document.addEventListener('pointerover', (e) => {
+    const target = e.target as Element;
+    if (topLayer(target) || target.closest("input:not([type='button'], [type='submit'], [type='checkbox'], [type='radio']), textarea, [contenteditable='true']")) {
+      set('native');
+      return;
+    }
+    const t = target.closest('[data-cursor], a, button, [role="option"], summary, label') as HTMLElement | null;
+    const kind = t ? (t.dataset.cursor ?? 'link') : '';
+    if (labels[kind]) {
+      label.textContent = labels[kind];
+      set('label');
+    } else set(kind);
+  });
+
+  // Pressing squeezes the ring, and every click sends a ripple out from the dot.
+  window.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType !== 'mouse' || state === 'native') return;
+      cursor.classList.add('is-down');
+      const ripple = document.createElement('i');
+      ripple.className = 'cursor-ripple';
+      ripple.style.translate = `${e.clientX}px ${e.clientY}px`;
+      ripple.addEventListener('animationend', () => ripple.remove());
+      cursor.appendChild(ripple);
+    },
+    { passive: true },
+  );
+  const release = () => cursor.classList.remove('is-down');
+  window.addEventListener('pointerup', release, { passive: true });
+  window.addEventListener('blur', release);
 }
 
 /* ---------- Per page ---------- */
@@ -147,16 +209,27 @@ export function initPage() {
   };
 }
 
+/** The cursor takes the color of the section under the middle of the screen, and goes back to black between them. */
 function sectionColors() {
-  const cursor = document.getElementById('cursor');
-  if (!cursor) return;
+  const paint = (value: string) => document.getElementById('cursor')?.style.setProperty('--cur', value);
+  let current: Element | null = null;
   live('[data-cur]').forEach((el) => {
+    // The footer is pinned behind the page, so it always looks on screen; it counts only once the page lifts off it.
+    const pinned = el.matches('.footer') ? live('.site-main')[0] : undefined;
     ScrollTrigger.create({
-      trigger: el,
-      start: 'top 55%',
-      end: 'bottom 55%',
+      trigger: pinned ?? el,
+      start: pinned ? 'bottom 55%' : 'top 55%',
+      // Past the page's end, so the very bottom still counts as inside it.
+      end: pinned ? 'bottom -100%' : 'bottom 55%',
       onToggle: (self) => {
-        if (self.isActive) cursor.style.setProperty('--cur', el.dataset.cur ?? 'var(--color-ink)');
+        if (self.isActive) {
+          current = el;
+          paint(el.dataset.cur ?? 'var(--color-ink)');
+        } else if (current === el) {
+          // Leaving a section with nothing after it, such as the top of the page, falls back to black.
+          current = null;
+          paint('var(--color-ink)');
+        }
       },
     });
   });

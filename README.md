@@ -23,9 +23,19 @@ The personal site of Nikhil Patil, AI/ML engineer in Mumbai: projects with recei
 
 The name is plain HTML in one ink color and nothing plays behind it. With reduced motion the lab shows still frames; without JavaScript it is left out.
 
+## Ask Nikhil
+
+The command palette (⌘K or Ctrl+K, or the A key) answers questions about Nikhil with NVIDIA Nemotron 3 Super, a free open model, through OpenRouter, using only this site's content. `lib/ask/knowledge.ts` turns `data/content.ts` into about 8,000 tokens of plain text that sits in a cached system prompt, so there is no vector database. `app/api/ask/route.ts` streams the answer back, and links in answers render only when they point to the site's own pages or links it already shows (`lib/ask/links.ts`).
+
+- **Switch it on:** create a key at openrouter.ai/settings/keys, add it as `OPENROUTER_API_KEY` in Vercel (Project Settings, Environment Variables, Production) and redeploy. Without it the palette says it isn't switched on yet.
+- **Models:** `nvidia/nemotron-3-super-120b-a12b:free` first, then `nvidia/nemotron-3.5-super-vl:free` and `nvidia/nemotron-3.5-lightning:free` when it is busy. `ASK_MODEL` puts another OpenRouter model at the front.
+- **Cost and limits:** the `:free` models cost nothing. OpenRouter allows 20 free requests a minute and 50 a day, or 1,000 a day once the account has bought at least 10 US dollars of credits; past that, the palette says it is resting. Free providers may log prompts, so the palette asks visitors not to share personal details.
+- **Limits:** 6 questions per visitor in 10 minutes, 30 a day, and `ASK_DAILY_CAP` (300 by default) for the whole site. Visitor IPs are hashed with the date and never stored.
+- **Question log:** with Upstash Redis added from the Vercel Marketplace, limits hold across servers and questions are kept, with emails and phone numbers removed, in the list `ask:log`. Without it, questions go to the Vercel runtime log.
+
 ## Stack
 
-Next.js 16 (App Router, Cache Components, every route prerendered), React 19.3 view transitions, TypeScript, Tailwind CSS 4, GSAP with ScrollTrigger and SplitText plus Lenis for the motion layer (loaded on the visitor's first move), pdf-lib, `next/og` for link previews, Vercel Analytics and Speed Insights.
+Next.js 16 (App Router, Cache Components, every route prerendered), React 19.3 view transitions, TypeScript, Tailwind CSS 4, GSAP with ScrollTrigger and SplitText plus Lenis for the motion layer (loaded on the visitor's first move), pdf-lib, `next/og` for link previews, OpenRouter for Ask Nikhil, Vercel Analytics and Speed Insights.
 
 ## Run it
 
