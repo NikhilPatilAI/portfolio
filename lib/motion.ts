@@ -89,17 +89,23 @@ function startCursor() {
   const y = gsap.quickTo(cursor, 'y', { duration: 0.25, ease: 'power3.out' });
   const labels: Record<string, string> = { view: 'View', proof: 'Proof', play: 'Play' };
   let state = 'default';
+  let visible = false;
   window.addEventListener(
     'pointermove',
     (e) => {
       if (e.pointerType !== 'mouse') return;
       x(e.clientX);
       y(e.clientY);
+      if (visible) return;
+      visible = true;
       gsap.to(cursor, { autoAlpha: 1, duration: 0.2, overwrite: 'auto' });
     },
     { passive: true },
   );
-  document.documentElement.addEventListener('mouseleave', () => gsap.to(cursor, { autoAlpha: 0, duration: 0.2 }));
+  document.documentElement.addEventListener('mouseleave', () => {
+    visible = false;
+    gsap.to(cursor, { autoAlpha: 0, duration: 0.2, overwrite: 'auto' });
+  });
   document.addEventListener('pointerover', (e) => {
     const t = (e.target as Element).closest('[data-cursor], a, button, input, [role="option"]') as HTMLElement | null;
     const next = t ? t.dataset.cursor ?? 'link' : 'default';
@@ -123,7 +129,7 @@ export function initPage() {
   const cleanups: Array<() => void> = [];
   const ctx = gsap.context(() => {
     sectionColors();
-    reveals();
+    reveals(cleanups);
     ribbons(cleanups);
   });
   if (finePointer()) {
@@ -142,28 +148,106 @@ export function initPage() {
 }
 
 function sectionColors() {
-  const root = document.documentElement;
+  const cursor = document.getElementById('cursor');
+  if (!cursor) return;
   live('[data-cur]').forEach((el) => {
     ScrollTrigger.create({
       trigger: el,
       start: 'top 55%',
       end: 'bottom 55%',
       onToggle: (self) => {
-        if (self.isActive) root.style.setProperty('--cur', el.dataset.cur ?? 'var(--color-ink)');
+        if (self.isActive) cursor.style.setProperty('--cur', el.dataset.cur ?? 'var(--color-ink)');
       },
     });
   });
 }
 
-function reveals() {
+/* ---------- Reveals: ScrollTrigger decides when, the browser's compositor does the moving ---------- */
+
+// Rough cubic-bezier stand-ins for browsers without CSS linear() easing.
+const BEZIER: Record<string, string> = {
+  'expo.out': 'cubic-bezier(0.16, 1, 0.3, 1)',
+  'back.out(1.4)': 'cubic-bezier(0.34, 1.4, 0.64, 1)',
+  'back.out(1.7)': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+  'back.out(1.8)': 'cubic-bezier(0.34, 1.6, 0.64, 1)',
+  'back.out(2.4)': 'cubic-bezier(0.34, 1.8, 0.64, 1)',
+  'back.out(3)': 'cubic-bezier(0.34, 2, 0.64, 1)',
+};
+const eases = new Map<string, string>();
+
+/** A GSAP ease as a CSS easing: sampled into linear() where supported, so the curve is exactly GSAP's. */
+function cssEase(name: string) {
+  let css = eases.get(name);
+  if (!css) {
+    if (CSS.supports('animation-timing-function', 'linear(0, 1)')) {
+      const f = gsap.parseEase(name);
+      css = `linear(${Array.from({ length: 41 }, (_, i) => +f(i / 40).toFixed(4)).join(', ')})`;
+    } else css = BEZIER[name] ?? BEZIER['expo.out'];
+    eases.set(name, css);
+  }
+  return css;
+}
+
+type From = (i: number) => Record<string, string | number>;
+type Stagger = number | ((i: number, el: Element, all: Element[]) => number);
+
+function reveals(cleanups: Array<() => void>) {
+  // Web Animations on translate, scale, rotate and opacity run on the compositor, so a section full of items
+  // arriving costs the main thread nothing per frame. Tweening them from script repainted the page on every frame.
+  const running = new Set<Animation>();
+  const held = new Set<HTMLElement>();
+  const play = (targets: Iterable<Element>, from: From, o: { duration: number; ease: string; stagger?: Stagger; delay?: number }) => {
+    const all = [...targets];
+    const easing = cssEase(o.ease);
+    all.forEach((el, i) => {
+      const step = typeof o.stagger === 'function' ? o.stagger(i, el, all) : (o.stagger ?? 0) * i;
+      // The style that held it hidden comes off in the same task the animation starts, so no frame shows it early.
+      if (held.delete(el as HTMLElement)) for (const k of Object.keys(from(i))) (el as HTMLElement).style.removeProperty(k);
+      // offset 0 makes this the starting pose; the end is the element's own style. A lone keyframe would be the end.
+      const a = el.animate([{ ...from(i), offset: 0 }], { duration: o.duration * 1000, delay: ((o.delay ?? 0) + step) * 1000, easing, fill: 'backwards' });
+      running.add(a);
+      a.finished.then(
+        () => running.delete(a),
+        () => running.delete(a),
+      );
+    });
+  };
+  // Hides items that wait below the fold for their cue, in the pose their reveal starts from.
+  const hold = (targets: Iterable<Element>, from: From) =>
+    [...targets].forEach((el, i) => {
+      for (const [k, v] of Object.entries(from(i))) (el as HTMLElement).style.setProperty(k, String(v));
+      held.add(el as HTMLElement);
+    });
+  cleanups.push(() => {
+    running.forEach((a) => a.cancel());
+    running.clear();
+    held.forEach((el) => ['translate', 'scale', 'rotate', 'opacity'].forEach((k) => el.style.removeProperty(k)));
+    held.clear();
+  });
+
   // Headings rise line by line behind a mask, once the real fonts set the line breaks.
+  const risen = new WeakSet<Element>();
   offScreen('.section-title, .cs-h2, .page-title').forEach((h) => {
+    let trigger: ScrollTrigger | null = null;
+    const from: From = () => ({ translate: '0 110%' });
     SplitText.create(h, {
       type: 'lines',
       mask: 'lines',
       autoSplit: true,
-      onSplit: (self) =>
-        gsap.from(self.lines, { yPercent: 110, duration: 1.1, ease: 'expo.out', stagger: 0.09, scrollTrigger: { trigger: h, start: 'top 90%', once: true } }),
+      onSplit: (self) => {
+        trigger?.kill();
+        if (risen.has(h)) return;
+        hold(self.lines, from);
+        trigger = ScrollTrigger.create({
+          trigger: h,
+          start: 'top 90%',
+          once: true,
+          onEnter: () => {
+            risen.add(h);
+            play(self.lines, from, { duration: 1.1, ease: 'expo.out', stagger: 0.09 });
+          },
+        });
+      },
     });
   });
 
@@ -172,10 +256,10 @@ function reveals() {
     start: 'top 92%',
     once: true,
     onEnter: (batch) => {
-      gsap.fromTo(batch, { y: 80, rotation: (i) => (i % 2 ? 3 : -3), autoAlpha: 0 }, { y: 0, rotation: 0, autoAlpha: 1, duration: 1.2, ease: 'expo.out', stagger: 0.1, clearProps: 'transform,opacity,visibility' });
+      play(batch, (i) => ({ translate: '0 80px', rotate: `${i % 2 ? 3 : -3}deg`, opacity: 0 }), { duration: 1.2, ease: 'expo.out', stagger: 0.1 });
       batch.forEach((card, i) => {
         const tools = card.querySelectorAll('.kit-tools li');
-        if (tools.length) gsap.fromTo(tools, { scale: 0.5, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.6, ease: 'back.out(2.4)', stagger: 0.03, delay: 0.3 + i * 0.1, clearProps: 'transform,opacity,visibility' });
+        if (tools.length) play(tools, () => ({ scale: 0.5, opacity: 0 }), { duration: 0.6, ease: 'back.out(2.4)', stagger: 0.03, delay: 0.3 + i * 0.1 });
       });
     },
   });
@@ -183,7 +267,7 @@ function reveals() {
   ScrollTrigger.batch(offScreen('.beyond > li, .cred, .tldr > div, .decisions > li, .results > li, .teach-links, .next-card'), {
     start: 'top 92%',
     once: true,
-    onEnter: (batch) => gsap.fromTo(batch, { y: 46, autoAlpha: 0, scale: 0.97 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.9, ease: 'back.out(1.4)', stagger: 0.08, clearProps: 'transform,opacity,visibility' }),
+    onEnter: (batch) => play(batch, () => ({ translate: '0 46px', scale: 0.97, opacity: 0 }), { duration: 0.9, ease: 'back.out(1.4)', stagger: 0.08 }),
   });
 
   // About: the portrait (or monogram) is revealed through a mask, then the three lines follow.
@@ -191,24 +275,35 @@ function reveals() {
     gsap.fromTo(monogram, { clipPath: 'inset(100% 0% 0% 0% round 36px)', scale: 1.08 }, { clipPath: 'inset(0% 0% 0% 0% round 36px)', scale: 1, duration: 1.2, ease: 'expo.out', clearProps: 'clipPath,transform', scrollTrigger: { trigger: monogram, start: 'top 85%', once: true } });
   });
   const aboutLines = offScreen('.about-lines li');
-  if (aboutLines.length) gsap.from(aboutLines, { y: 30, autoAlpha: 0, duration: 0.9, ease: 'expo.out', stagger: 0.12, scrollTrigger: { trigger: aboutLines[0], start: 'top 88%', once: true } });
+  if (aboutLines.length) {
+    const from: From = () => ({ translate: '0 30px', opacity: 0 });
+    hold(aboutLines, from);
+    ScrollTrigger.create({ trigger: aboutLines[0], start: 'top 88%', once: true, onEnter: () => play(aboutLines, from, { duration: 0.9, ease: 'expo.out', stagger: 0.12 }) });
+  }
 
   // Experience: the rule draws itself, then each role arrives.
   offScreen('.timeline').forEach((list) => {
+    const roles = list.querySelectorAll(':scope > li');
+    const dots = list.querySelectorAll('.timeline-when i');
+    const roleFrom: From = () => ({ translate: '0 30px', opacity: 0 });
+    const dotFrom: From = () => ({ scale: 0 });
+    hold(roles, roleFrom);
+    hold(dots, dotFrom);
     const tl = gsap.timeline({ scrollTrigger: { trigger: list, start: 'top 85%', once: true } });
     tl.fromTo(list, { '--draw': 0 }, { '--draw': 1, duration: 1.1, ease: 'power2.inOut' });
-    tl.from(list.querySelectorAll(':scope > li'), { y: 30, autoAlpha: 0, duration: 0.8, ease: 'expo.out', stagger: 0.12 }, 0.25);
-    tl.from(list.querySelectorAll('.timeline-when i'), { scale: 0, duration: 0.6, ease: 'back.out(3)', stagger: 0.12 }, 0.35);
+    tl.call(() => play(roles, roleFrom, { duration: 0.8, ease: 'expo.out', stagger: 0.12 }), [], 0.25);
+    tl.call(() => play(dots, dotFrom, { duration: 0.6, ease: 'back.out(3)', stagger: 0.12 }), [], 0.35);
   });
 
   // Podcast: the wall cascades in from the show cover.
   offScreen('.eps').forEach((eps) => {
     const items = eps.querySelectorAll('.ep');
+    const spread = gsap.utils.distribute({ amount: 0.9, grid: 'auto', from: 'start' });
     ScrollTrigger.create({
       trigger: eps,
       start: 'top 88%',
       once: true,
-      onEnter: () => gsap.fromTo(items, { y: 40, scale: 0.88, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.8, ease: 'back.out(1.7)', stagger: { amount: 0.9, grid: 'auto', from: 'start' }, clearProps: 'transform,opacity,visibility' }),
+      onEnter: () => play(items, () => ({ translate: '0 40px', scale: 0.88, opacity: 0 }), { duration: 0.8, ease: 'back.out(1.7)', stagger: (i, el, all) => spread(i, el, all) }),
     });
   });
 
@@ -255,7 +350,10 @@ function reveals() {
   const talk = live('.talk')[0];
   const main = live('.site-main')[0];
   if (talk && main && !inView(talk)) {
-    gsap.fromTo(talk.querySelectorAll('.talk-ch'), { yPercent: 70, rotation: (i) => (i % 2 ? 14 : -14), autoAlpha: 0 }, { yPercent: 0, rotation: 0, autoAlpha: 1, duration: 1, ease: 'back.out(1.8)', stagger: 0.045, scrollTrigger: { trigger: main, start: 'bottom 85%', once: true } });
+    const chars = talk.querySelectorAll('.talk-ch');
+    const from: From = (i) => ({ translate: '0 70%', rotate: `${i % 2 ? 14 : -14}deg`, opacity: 0 });
+    hold(chars, from);
+    ScrollTrigger.create({ trigger: main, start: 'bottom 85%', once: true, onEnter: () => play(chars, from, { duration: 1, ease: 'back.out(1.8)', stagger: 0.045 }) });
   }
 }
 
@@ -311,18 +409,27 @@ function tilt(cleanups: Array<() => void>) {
     const ax = art ? gsap.quickTo(art, 'x', { duration: 0.8, ease: 'power3.out' }) : null;
     const ay = art ? gsap.quickTo(art, 'y', { duration: 0.8, ease: 'power3.out' }) : null;
     const strength = card.classList.contains('kit-wide') ? 0.5 : 1;
+    const shine = card.querySelector<HTMLElement>('.card-shine');
+    let box: DOMRect | null = null;
+    let boxAt = -1;
     const move = (e: PointerEvent) => {
-      const r = card.getBoundingClientRect();
+      // Reading the box every move forced a style pass each time; it only changes when the page scrolls.
+      if (!box || boxAt !== window.scrollY) {
+        box = card.getBoundingClientRect();
+        boxAt = window.scrollY;
+      }
+      const r = box;
       const px = (e.clientX - r.left) / r.width;
       const py = (e.clientY - r.top) / r.height;
       rx((0.5 - py) * 9 * strength);
       ry((px - 0.5) * 11 * strength);
       ax?.((px - 0.5) * -28);
       ay?.((py - 0.5) * -28);
-      card.style.setProperty('--mx', `${px * 100}%`);
-      card.style.setProperty('--my', `${py * 100}%`);
+      shine?.style.setProperty('--sx', `${e.clientX - r.left}px`);
+      shine?.style.setProperty('--sy', `${e.clientY - r.top}px`);
     };
     const leave = () => {
+      box = null;
       rx(0);
       ry(0);
       ax?.(0);

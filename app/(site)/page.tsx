@@ -7,6 +7,7 @@ import { Ribbons } from '@/components/home/ribbons';
 import { Stack } from '@/components/home/stack';
 import { Teaching } from '@/components/home/teaching';
 import { Work } from '@/components/home/work';
+import { LiveObserver } from '@/components/live-observer';
 import { PageFrame } from '@/components/page-frame';
 import { SiteHeader } from '@/components/site-header';
 
@@ -32,6 +33,7 @@ export default function StoryPage() {
           <Stack />
           <Teaching />
           <Beyond />
+          <LiveObserver selector=".section-hud" />
         </main>
       </PageFrame>
     </>

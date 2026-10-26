@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-/** Marks the card illustrations that are on screen with .is-live, so their CSS animations only run while visible. */
+/** Marks the elements that are on screen with .is-live, so their CSS animations only run while visible. */
 export function LiveObserver({ selector }: { selector: string }) {
   useEffect(() => {
     const io = new IntersectionObserver(
