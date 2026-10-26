@@ -16,6 +16,7 @@ const NOTES: Record<string, string> = {
   busy: `Ask Nikhil has answered a lot today and is resting. Email Nikhil at ${site.email}.`,
   refusal: "That one isn't something I can help with. Ask about Nikhil's work, skills or teaching.",
   max_tokens: 'That answer ran long, so it stops here. Ask a narrower question for the rest.',
+  empty: 'No answer came back this time. Try again, or email Nikhil.',
   error: 'Something went wrong on the way. Try again, or email Nikhil.',
 };
 

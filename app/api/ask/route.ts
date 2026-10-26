@@ -116,9 +116,10 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         models: MODELS,
         stream: true,
-        max_tokens: 1500,
-        // Short factual answers from one document: a little reasoning, kept out of the reply, and a low temperature.
-        reasoning: { effort: 'low', exclude: true },
+        max_tokens: 2000,
+        // Short factual answers from facts already in the prompt: no reasoning pass, which on these models took
+        // twenty seconds and could use the whole budget before a word appeared, and a low temperature.
+        reasoning: { effort: 'none', exclude: true },
         temperature: 0.3,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -192,6 +193,7 @@ export async function POST(req: Request) {
             if (choice?.finish_reason) stop = STOPS[choice.finish_reason] ?? choice.finish_reason;
           }
         }
+        if (!failed && !chars && stop !== 'refusal') failed = 'empty';
         if (failed) {
           stop = failed;
           send({ type: 'error', code: failed });
