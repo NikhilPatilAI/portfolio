@@ -1045,7 +1045,11 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
           ctx.lineWidth = 2.5;
           ctx.strokeStyle = '#fff';
           ctx.stroke();
-          ctx.font = mono(11);
+        }
+        // Labels go on last, so no ball or trail is drawn over another optimizer's name.
+        ctx.font = mono(11);
+        for (const b of balls) {
+          const [sx, sy] = project(b.x, height(b.x, b.z) - 0.02, b.z);
           const label = `${b.name} ${b.loss.toFixed(2)}`;
           const lw = ctx.measureText(label).width;
           const lx = clamp(sx + 11, 4, W - lw - 4);
