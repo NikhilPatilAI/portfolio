@@ -1,6 +1,10 @@
 import Link from 'next/link';
+import { SectionHud } from '@/components/section-hud';
 import { certifications, education, experience, sections } from '@/data/content';
 import { tint } from '@/lib/style';
+
+// Only claimed while every role's summary really names Azure.
+const onAzure = experience.every((r) => r.summary.includes('Azure'));
 
 export function Experience() {
   return (
@@ -14,6 +18,7 @@ export function Experience() {
             {sections.experience.title}
           </h2>
           <p className="section-sub">{sections.experience.sub}</p>
+          <SectionHud hue="lime" items={[`${experience.length} roles`, ...(onAzure ? ['Azure in every role'] : []), `${education.length} degrees`, `${certifications.length} certifications`]} />
         </div>
         <ol className="timeline">
           {experience.map((r) => (

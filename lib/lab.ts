@@ -2,7 +2,7 @@
  * The hero's AI lab: one particle system that walks through how a model works, in six stages.
  * Embed (the skills as a 3D embedding space, the cursor is the query), Attend (attention streams between the
  * words of the tagline), Fire (a forward pass), Learn (a real network training live), Descend (optimizers on a
- * rotating loss terrain) and Generate (diffusion sampling the NP monogram). The same particles morph from one
+ * rotating loss terrain) and Generate (diffusion sampling a brain, whose neurons then fire). The same particles morph from one
  * stage to the next. Plain 2D canvas, no libraries. With `still`, every stage is a single settled frame.
  */
 
@@ -95,7 +95,7 @@ const INK = '#111318';
 /** Deep strengths of sky, grape, mint, an orange, iris and rose, then ink and a quiet grey. */
 const HUES = ['#0171a3', '#853dc2', '#0a7d51', '#c2410c', '#4556d9', '#b51c79', INK, '#a3a9b6'];
 const FOV = 3.2;
-const DURATION = [9, 7, 7, 8, 9, 6];
+const DURATION = [4.5, 4, 4, 4.5, 5, 5];
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const gauss = () => {
@@ -198,15 +198,28 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
   const context = canvas.getContext('2d');
   if (!context) return null;
   const ctx: CanvasRenderingContext2D = context;
+  /** A white outline under canvas text, so labels stay readable where they cross dots and lines. */
+  const halo = (text: string, x: number, y: number) => {
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#fff';
+    ctx.strokeText(text, x, y);
+    ctx.restore();
+  };
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let W = 0;
   let H = 0;
   let unit = 1;
   let phone = false;
+  // The top of the stage buttons, and whether they sit at the top of the lab (phones) or along its bottom.
+  let barTop = 0;
+  let barAtTop = false;
   let T = 0;
   let born = 0;
   let grid: HTMLCanvasElement | null = null;
-  const pointer = { x: 0, y: 0, inside: false, last: -10 };
+  const pointer = { x: 0, y: 0, inside: false, last: -10, tapped: -10 };
   const cam = { yaw: 0, pitch: 0 };
   const tilt = () => (pointer.inside ? (pointer.x / W - 0.5) * 0.5 : 0);
 
@@ -220,8 +233,8 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
     const y1 = y * cp - z1 * sp;
     const z2 = y * sp + z1 * cp;
     const k = FOV / (FOV + z2);
-    // On phones the stage buttons sit at the top of the lab, so the drawing centres lower.
-    return [W / 2 + x1 * unit * k, H * (phone ? 0.6 : 0.47) + y1 * unit * k, k, z2];
+    // When the stage buttons sit at the top of the lab, the drawing centres lower.
+    return [W / 2 + x1 * unit * k, H * (barAtTop ? 0.6 : 0.47) + y1 * unit * k, k, z2];
   }
 
   /* ---------- Particles ---------- */
@@ -251,8 +264,8 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
   };
   function physics(dt: number) {
     // The first two seconds ease in, so the opening burst is one slow, deliberate expansion.
-    const ease = Math.min(1, 0.12 + (T - born) / 2.2);
-    const stiff = 70 * ease * ease;
+    const ease = Math.min(1, 0.15 + (T - born) / 1.2);
+    const stiff = 95 * ease * ease;
     const damp = Math.exp(-11 * dt);
     for (const p of P) {
       p.vx = (p.vx + (p.tx - p.x) * stiff * p.k * dt) * damp;
@@ -306,13 +319,13 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
       enter() {
         centers = TOPICS.map((_, c) => {
           const a = (c / 6) * TAU + 0.3;
-          return [Math.cos(a) * 0.62, c % 2 ? -0.22 : 0.2, Math.sin(a) * 0.62];
+          return [Math.cos(a) * 0.76, c % 2 ? -0.26 : 0.24, Math.sin(a) * 0.76];
         });
         P.forEach((p, i) => {
           const doc = i < DOCS.length;
           const c = doc ? DOCS[i][1] : i % 6;
           const [cx, cy, cz] = centers[c];
-          const s = doc ? 0.11 : 0.17;
+          const s = doc ? 0.08 : 0.14;
           Object.assign(p, { role: doc ? 'doc' : 'pt', cluster: c, label: doc ? DOCS[i][0] : '', bx: cx + gauss() * s, by: cy + gauss() * s * 0.8, bz: cz + gauss() * s, col: c, tsize: doc ? 4.8 : 2.1, talpha: doc ? 1 : 0.72 });
         });
         // A sparse nearest-neighbour graph inside each cluster, so the space reads as a network.
@@ -375,8 +388,11 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
         centers.forEach(([cx, cy, cz], c) => {
           const [sx, sy, k] = project(cx, cy - 0.3, cz);
           ctx.globalAlpha = 0.45 + 0.4 * k;
+          ctx.textAlign = 'center';
+          halo(TOPICS[c].toUpperCase(), sx, sy);
           ctx.fillStyle = HUES[c];
-          ctx.fillText(TOPICS[c].toUpperCase(), sx - 28, sy);
+          ctx.fillText(TOPICS[c].toUpperCase(), sx, sy);
+          ctx.textAlign = 'left';
         });
         ctx.globalAlpha = 1;
         const top = P.filter((p) => p.role === 'doc' && p.alpha > 0.5)
@@ -385,36 +401,59 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
             return { p, sx, sy, d: Math.hypot(sx - q.x, sy - q.y) };
           })
           .sort((a, b) => a.d - b.d)
-          .slice(0, 5);
-        const boxes: { x: number; y: number; w: number }[] = [];
+          .slice(0, 4);
+        // Each match: a line from the query, and a numbered dot that matches its row in the results panel.
         top.forEach((d, i) => {
           ctx.strokeStyle = HUES[d.p.cluster];
-          ctx.lineWidth = 2.4 - i * 0.35;
-          ctx.globalAlpha = 0.9 - i * 0.12;
+          ctx.lineWidth = 2.4 - i * 0.4;
+          ctx.globalAlpha = 0.9 - i * 0.15;
           ctx.beginPath();
           ctx.moveTo(q.x, q.y);
           ctx.lineTo(d.sx, d.sy);
           ctx.stroke();
           ctx.globalAlpha = 1;
           ctx.beginPath();
-          ctx.arc(d.sx, d.sy, 6, 0, TAU);
+          ctx.arc(d.sx, d.sy, 8, 0, TAU);
           ctx.fillStyle = HUES[d.p.cluster];
           ctx.fill();
           ctx.lineWidth = 2;
           ctx.strokeStyle = '#fff';
           ctx.stroke();
-          const label = `${d.p.label}  ${(0.98 - Math.min(d.d / (W * 0.9), 1) * 0.55).toFixed(2)}`;
-          ctx.font = mono(phone ? 11 : 13);
-          const tw = ctx.measureText(label).width;
-          const lx = d.sx + (d.sx > W - tw - 30 ? -tw - 20 : 12);
-          let ly = d.sy - 6;
-          // Push labels apart so the top five never overlap.
-          for (const b of boxes) if (Math.abs(b.y - ly) < 20 && lx < b.x + b.w + 8 && lx + tw + 8 > b.x) ly = b.y + 20;
-          boxes.push({ x: lx, y: ly, w: tw });
-          ctx.fillStyle = 'rgba(255,255,255,0.93)';
-          ctx.fillRect(lx - 5, ly - 13, tw + 10, 19);
+          ctx.font = mono(10);
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(i + 1), d.sx, d.sy + 3.5);
+          ctx.textAlign = 'left';
+        });
+        // The results panel, like a search engine's: rank, document and similarity, always in the same corner.
+        const rowH = phone ? 17 : 20;
+        ctx.font = mono(phone ? 11 : 12.5);
+        const widest = Math.max(0, ...top.map((d, i) => ctx.measureText(`${i + 1}  ${d.p.label}`).width));
+        const pw = Math.max(phone ? 178 : 220, widest + (phone ? 64 : 76));
+        const ph = 26 + top.length * rowH;
+        const px = 4;
+        const py = (barAtTop ? H - 16 : barTop - 10) - ph;
+        ctx.fillStyle = 'rgba(255,255,255,0.94)';
+        ctx.strokeStyle = 'rgba(17,19,24,0.14)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(px, py, pw, ph, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = mono(phone ? 9.5 : 10.5);
+        ctx.fillStyle = '#6b7080';
+        ctx.fillText('TOP 4 · NEAREST TO QUERY', px + 12, py + 17);
+        top.forEach((d, i) => {
+          const y = py + 22 + (i + 1) * rowH - 5;
+          ctx.font = mono(phone ? 11 : 12.5);
           ctx.fillStyle = HUES[d.p.cluster];
-          ctx.fillText(label, lx, ly + 1);
+          ctx.fillText(`${i + 1}  ${d.p.label}`, px + 12, y);
+          // Similarity from distance, 1 / (1 + d), with d in embedding units.
+          const score = (1 / (1 + d.d / unit)).toFixed(2);
+          ctx.fillStyle = INK;
+          ctx.textAlign = 'right';
+          ctx.fillText(score, px + pw - 12, y);
+          ctx.textAlign = 'left';
         });
         ctx.strokeStyle = INK;
         ctx.lineWidth = 2;
@@ -446,7 +485,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
       tap() {
         burst = T;
       },
-      hud: () => `embed · 6 topics · ${DOCS.length} documents\n${pointer.inside ? 'your cursor is the query' : 'query → top 5 by cosine similarity'}`,
+      hud: () => `embed · 6 topics · ${DOCS.length} documents\n${pointer.inside ? 'your cursor is the query' : 'query → its 4 nearest documents'}`,
     };
   }
 
@@ -524,7 +563,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
             focus = best;
             assign();
           }
-        } else if ((clock += dt) > 1.7) {
+        } else if ((clock += dt) > 0.85) {
           clock = 0;
           focus = (focus + 1) % n;
           if (!focus) head = (head + 1) % 3;
@@ -592,7 +631,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
         head = (head + 1) % 3;
         assign();
       },
-      hud: () => `attend · head ${head + 1} of 3 · query "${WORDS[focus]}"\nsoftmax(QKᵀ / √d), computed live`,
+      hud: () => `attend · head ${head + 1}/3 · query "${WORDS[focus]}"\nsoftmax(QKᵀ / √d), computed live`,
     };
   }
 
@@ -640,7 +679,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
       },
       camera: () => [0.38 * Math.sin(T * 0.27) + tilt(), 0.14],
       update(dt) {
-        if ((clock += dt) > 0.42) {
+        if ((clock += dt) > 0.26) {
           clock = 0;
           fireNode(nodes[Math.floor(Math.random() * 4)]);
         }
@@ -662,7 +701,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
             p.tsize = 2.1 + n.act * 1.2;
           } else if (p.role === 'sig' && p.busy && p.edge) {
             count++;
-            p.s += dt / 0.5;
+            p.s += dt / 0.34;
             const e = p.edge;
             if (p.s >= 1) {
               p.busy = false;
@@ -784,8 +823,8 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
       },
       camera: () => [0, 0],
       update() {
-        for (let k = 0; k < 3; k++) {
-          stats = net.train(data, 0.03);
+        for (let k = 0; k < 6; k++) {
+          stats = net.train(data, 0.035);
           epoch++;
         }
         for (let j = 0; j < G; j++) {
@@ -888,7 +927,8 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
       [-0.2, 0.62, 0.25, 0.6],
     ];
     const f = (x: number, z: number) => {
-      let v = 0.62 + 0.07 * Math.sin(x * 4.5 + T * 0.4) * Math.cos(z * 3.6 - T * 0.3);
+      // The floor sits just above zero, so no optimizer ever reports a negative loss.
+      let v = 0.72 + 0.07 * Math.sin(x * 4.5 + T * 0.4) * Math.cos(z * 3.6 - T * 0.3);
       for (const [cx, cz, r, d] of wells) {
         const dx = x - cx;
         const dz = z - cz;
@@ -896,7 +936,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
       }
       return v;
     };
-    const height = (x: number, z: number) => 0.22 - f(x, z) * 0.85;
+    const height = (x: number, z: number) => 0.305 - f(x, z) * 0.85;
     let R = 24;
     let C = 34;
     const gx = (c: number) => -0.95 + (1.9 * c) / (C - 1);
@@ -935,7 +975,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
         }
         const e = 1e-3;
         for (const b of balls) {
-          for (let k = 0; k < 2; k++) {
+          for (let k = 0; k < 3; k++) {
             const gX = (f(b.x + e, b.z) - f(b.x - e, b.z)) / (2 * e);
             const gZ = (f(b.x, b.z + e) - f(b.x, b.z - e)) / (2 * e);
             b.k++;
@@ -984,6 +1024,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
         }
       },
       over() {
+        const placed: number[][] = [];
         for (const b of balls) {
           ctx.strokeStyle = b.color;
           ctx.lineWidth = 3.2;
@@ -1005,8 +1046,15 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
           ctx.strokeStyle = '#fff';
           ctx.stroke();
           ctx.font = mono(11);
+          const label = `${b.name} ${b.loss.toFixed(2)}`;
+          const lw = ctx.measureText(label).width;
+          const lx = clamp(sx + 11, 4, W - lw - 4);
+          let ly = sy - 9;
+          while (placed.some(([x, y, w]) => lx < x + w && x < lx + lw && Math.abs(y - ly) < 13)) ly -= 13;
+          placed.push([lx, ly, lw]);
+          halo(label, lx, ly);
           ctx.fillStyle = b.color;
-          ctx.fillText(b.name, sx + 11, sy - 9);
+          ctx.fillText(label, lx, ly);
         }
       },
       tap(x, y) {
@@ -1022,11 +1070,95 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
         }
         if (best) drop(gx(best.gj), gz(best.gi));
       },
-      hud: () => balls.map((b) => `${b.name.padEnd(8)} loss ${b.loss.toFixed(3)}`).join('\n'),
+      hud: () => {
+        const best = balls.reduce((a, b) => (b.loss < a.loss ? b : a), balls[0]);
+        return `descend · SGD vs Momentum vs Adam\nlowest loss ${best ? `${best.loss.toFixed(3)} · ${best.name}` : ''}`;
+      },
     };
   }
 
-  /* ---------- 06 · Generate: diffusion samples the NP monogram out of 3D noise in 40 steps ---------- */
+  /* ---------- 06 · Generate: diffusion samples a brain out of 3D noise in 40 steps, then its neurons fire ---------- */
+  function brainPoints(count: number) {
+    // A side view of a brain facing left, in a 240 px box: cerebrum, cerebellum and brainstem, with the main folds.
+    const cerebrum = new Path2D();
+    cerebrum.moveTo(52, 132);
+    cerebrum.bezierCurveTo(30, 112, 32, 70, 62, 52);
+    cerebrum.bezierCurveTo(84, 36, 116, 30, 146, 34);
+    cerebrum.bezierCurveTo(178, 38, 204, 60, 208, 92);
+    cerebrum.bezierCurveTo(212, 116, 200, 134, 180, 138);
+    cerebrum.bezierCurveTo(166, 141, 156, 140, 146, 146);
+    cerebrum.bezierCurveTo(128, 156, 104, 158, 86, 152);
+    cerebrum.bezierCurveTo(72, 148, 60, 142, 52, 132);
+    cerebrum.closePath();
+    const cerebellum = new Path2D();
+    cerebellum.ellipse(170, 150, 32, 19, -0.12, 0, TAU);
+    const stem = new Path2D();
+    stem.moveTo(128, 148);
+    stem.bezierCurveTo(133, 164, 134, 178, 131, 194);
+    stem.lineTo(145, 194);
+    stem.bezierCurveTo(147, 178, 147, 164, 145, 148);
+    stem.closePath();
+    const folds = new Path2D();
+    const fold = (...c: number[]) => {
+      folds.moveTo(c[0], c[1]);
+      folds.bezierCurveTo(c[2], c[3], c[4], c[5], c[6], c[7]);
+    };
+    fold(66, 122, 92, 108, 122, 104, 156, 100); // lateral sulcus
+    fold(128, 34, 122, 56, 132, 72, 118, 104); // central sulcus
+    fold(56, 78, 72, 70, 82, 84, 98, 74);
+    fold(48, 104, 66, 96, 78, 108, 100, 96);
+    fold(84, 46, 92, 56, 104, 52, 108, 66);
+    fold(66, 62, 76, 56, 86, 64, 94, 58);
+    fold(104, 84, 112, 76, 106, 92, 116, 88);
+    fold(146, 40, 144, 58, 160, 64, 152, 84);
+    fold(176, 52, 168, 70, 186, 80, 178, 98);
+    fold(196, 82, 184, 98, 200, 108, 190, 124);
+    fold(160, 104, 168, 96, 176, 112, 186, 106);
+    fold(80, 138, 100, 130, 122, 134, 142, 124);
+    fold(144, 146, 158, 140, 182, 140, 198, 146); // cerebellum folia
+    fold(146, 154, 162, 150, 184, 150, 198, 156);
+    fold(152, 162, 166, 160, 182, 160, 192, 164);
+    const S = 240;
+    const off = document.createElement('canvas');
+    off.width = off.height = S;
+    const o = off.getContext('2d', { willReadFrequently: true });
+    const out: [number, number, number, number][] = [];
+    if (!o) return out;
+    o.lineJoin = 'round';
+    o.lineCap = 'round';
+    o.lineWidth = 3.2;
+    o.stroke(stem);
+    o.stroke(cerebellum);
+    o.stroke(cerebrum);
+    o.stroke(folds);
+    const line = o.getImageData(0, 0, S, S).data;
+    o.clearRect(0, 0, S, S);
+    o.fill(stem);
+    o.fill(cerebellum);
+    o.fill(cerebrum);
+    const fill = o.getImageData(0, 0, S, S).data;
+    const at = (d: Uint8ClampedArray, x: number, y: number) => d[(Math.floor(y) * S + Math.floor(x)) * 4 + 3];
+    // The colors of a brain atlas: frontal, parietal, occipital and temporal lobes, cerebellum, brainstem.
+    const lobe = (x: number, y: number) => {
+      if (y > 156 && x > 124 && x < 150) return 4;
+      if (Math.hypot((x - 170) / 32, (y - 150) / 19) < 1 && y > 136) return 5;
+      if (y > 122 - ((x - 66) / 90) * 22 && x < 160) return 3;
+      if (x < 128 - ((y - 34) / 70) * 10) return 0;
+      return x < 172 ? 1 : 2;
+    };
+    for (let t = 0; out.length < count * 0.62 && t < 300000; t++) {
+      const x = Math.random() * S;
+      const y = Math.random() * S;
+      if (at(line, x, y) > 120) out.push([(x / S) * 2 - 1, (y / S) * 2 - 1, lobe(x, y), 1]);
+    }
+    for (let t = 0; out.length < count && t < 300000; t++) {
+      const x = Math.random() * S;
+      const y = Math.random() * S;
+      if (at(fill, x, y) > 120 && at(line, x, y) < 40) out.push([(x / S) * 2 - 1, (y / S) * 2 - 1, lobe(x, y), 0]);
+    }
+    return out;
+  }
+
   function generateStage(): Stage {
     let step = 0;
     let level = 1;
@@ -1034,35 +1166,21 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
     return {
       title: 'Generate',
       enter() {
-        const S = 220;
-        const off = document.createElement('canvas');
-        off.width = off.height = S;
-        const o = off.getContext('2d');
-        const pts: [number, number][] = [];
-        if (o) {
-          o.fillStyle = '#000';
-          o.font = `800 ${S * 0.62}px 'Atkinson Hyperlegible Next', system-ui, sans-serif`;
-          o.textAlign = 'center';
-          o.textBaseline = 'middle';
-          o.fillText('NP', S / 2, S * 0.53);
-          const px = o.getImageData(0, 0, S, S).data;
-          for (let tries = 0; pts.length < N && tries < 200000; tries++) {
-            const x = Math.random() * S;
-            const y = Math.random() * S;
-            if (px[(Math.floor(y) * S + Math.floor(x)) * 4 + 3] > 140) pts.push([(x / S) * 2 - 1, (y / S) * 2 - 1]);
-          }
-        }
+        const pts = brainPoints(N);
         P.forEach((p, i) => {
-          if (i < pts.length) Object.assign(p, { role: 'gen', x0: pts[i][0] * 0.95, y0: pts[i][1] * 0.95, nx: gauss() * 0.7, ny: gauss() * 0.7, nz: gauss() * 0.7, col: 6, tsize: 1.5 + Math.random() * 1.6, talpha: 0.92 });
-          else park(p);
+          if (i < pts.length) {
+            const [x, y, lobe, edge] = pts[i];
+            const base = edge ? 1.8 + Math.random() * 0.8 : 1.2 + Math.random() * 0.6;
+            Object.assign(p, { role: 'gen', x0: x * 0.98, y0: y * 0.98, cluster: lobe, a: edge, sp: base, nx: gauss() * 0.7, ny: gauss() * 0.7, nz: gauss() * 0.7, col: 7, tsize: base, talpha: 0.9 });
+          } else park(p);
         });
         step = 0;
         level = 1;
         clock = 0;
       },
-      camera: () => [0.6 * Math.sin(T * 0.5) * level, 0.1 * level],
+      camera: () => [0.6 * Math.sin(T * 0.5) * level + (level === 0 ? 0.16 * Math.sin(T * 0.8) : 0), 0.1 * level],
       update(dt) {
-        if (level > 0 && (clock += dt) > 0.065) {
+        if (level > 0 && (clock += dt) > 0.045) {
           clock = 0;
           step++;
           level = Math.max(0, 1 - step / 40);
@@ -1076,19 +1194,29 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
         const ab = Math.cos((level * Math.PI) / 2) ** 2;
         const a = Math.sqrt(ab);
         const b = Math.sqrt(1 - ab);
+        // Once sampled, a wave of thought sweeps front to back and single neurons flash.
+        const wave = ((T * 0.55) % 1.5) - 0.25;
         for (const p of P) {
           if (p.role !== 'gen') continue;
           p.tx = a * p.x0 + b * p.nx;
           p.ty = a * p.y0 + b * p.ny;
           p.tz = b * p.nz;
-          p.col = level > 0.02 ? 7 : 6;
+          if (level > 0.15) {
+            p.col = 7;
+            continue;
+          }
+          p.col = p.cluster;
+          const near = Math.max(0, 1 - Math.abs((p.x0 + 1) / 2 - wave) / 0.07);
+          const spark = (T * 1.4 + p.ph * 5) % 3.2 < 0.07 ? 1 : 0;
+          p.tsize = p.sp * (1 + near * 0.9 + spark * 1.6);
+          p.talpha = p.a ? 0.95 : 0.5 + near * 0.45;
         }
       },
       tap() {
         step = 0;
         level = 1;
       },
-      hud: () => (level > 0 ? `generate · sampling step ${step} / 40\nnoise level ${level.toFixed(2)}` : 'generate · sampled in 40 steps\ntap to sample again'),
+      hud: () => (level > 0 ? `generate · sampling step ${step} / 40\nnoise level ${level.toFixed(2)}` : 'generate · a brain in 40 steps\nneurons firing · tap to resample'),
     };
   }
 
@@ -1103,10 +1231,13 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
     W = r.width;
     H = r.height;
     phone = W < 560;
+    const bar = buttons[0]?.parentElement?.getBoundingClientRect();
+    barTop = bar ? bar.top - r.top : H;
+    barAtTop = barTop < H / 2;
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    unit = Math.min(W * 0.46, H * 0.4);
+    unit = Math.min(W * 0.44, H * 0.37);
     // A faint lab-notebook dot grid frames the stage.
     grid = document.createElement('canvas');
     grid.width = canvas.width;
@@ -1186,6 +1317,7 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
     if ((e.target as Element).closest('button')) return;
     const [x, y] = at(e);
     pointer.last = T;
+    pointer.tapped = T;
     stages[si].tap?.(x, y);
     if (still) renderStill();
   };
@@ -1223,8 +1355,8 @@ export function createLab({ root, canvas, hud, buttons, still = false }: { root:
     last = now;
     if (!visible) return;
     T += dt;
-    // Stages advance on their own unless someone has been playing with the lab in the last four seconds.
-    if (T - pointer.last >= 4) clock += dt;
+    // Stages advance on their own and never stall: at half speed while someone moves over the lab, held for four seconds after a tap.
+    if (T - pointer.tapped >= 4) clock += T - pointer.last < 1.5 ? dt * 0.5 : dt;
     if (clock > DURATION[si]) go((si + 1) % stages.length);
     buttons[si]?.style.setProperty('--p', `${Math.min(100, (clock / DURATION[si]) * 100)}%`);
     aim(dt);

@@ -1,4 +1,6 @@
 import { CardArt } from '@/components/art';
+import { LiveObserver } from '@/components/live-observer';
+import { SectionHud } from '@/components/section-hud';
 import { sections, stack } from '@/data/content';
 import { tint } from '@/lib/style';
 
@@ -14,6 +16,7 @@ export function Stack() {
             {sections.stack.title}
           </h2>
           <p className="section-sub">{sections.stack.sub}</p>
+          <SectionHud hue="mango" items={[`${stack.reduce((n, g) => n + g.tools.length, 0)} tools`, `${stack.length} groups`]} />
         </div>
         <div className="kits">
           {stack.map((group, i) => (
@@ -35,6 +38,7 @@ export function Stack() {
             </article>
           ))}
         </div>
+        <LiveObserver selector="#stack .kit-art" />
       </div>
     </section>
   );

@@ -363,6 +363,7 @@
     position: relative;
     height: 440px;
     min-width: 0;
+    container: lab / inline-size;
     touch-action: pan-y;
     user-select: none;
     -webkit-user-select: none;
@@ -379,20 +380,31 @@
     width: 100%;
     height: 100%;
   }
-  .lab-cap,
-  .lab-hud {
+  /* Caption and readout share the top line while they fit, and the readout drops below the caption when they don't. */
+  .lab-top {
     position: absolute;
     top: 4px;
+    left: 0;
+    right: 0;
     z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2px 20px;
+    pointer-events: none;
+  }
+  .lab-cap,
+  .lab-hud {
     margin: 0;
     font: 600 0.74rem/1.4 var(--font-mono);
     letter-spacing: 0.04em;
     color: var(--color-ink-soft);
     white-space: pre;
-    pointer-events: none;
+    text-shadow:
+      0 0 3px var(--color-paper),
+      0 0 6px var(--color-paper);
   }
   .lab-cap {
-    left: 0;
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
@@ -407,7 +419,9 @@
     vertical-align: 1px;
   }
   .lab-hud {
-    right: 0;
+    /* As wide as the longest readout line (33 characters), so where it sits depends on the lab's width, never on this frame's text. */
+    min-width: calc(33ch + 1.4em);
+    margin-left: auto;
     text-align: right;
   }
   .lab-stages {
@@ -437,6 +451,18 @@
     margin-right: 6px;
     font-weight: 400;
   }
+  /* A lab too narrow for six numbered buttons in a row drops the numbers instead of wrapping one button onto its own line. */
+  @container lab (min-width: 420px) and (max-width: 640px) {
+    .lab-stages {
+      gap: 5px;
+    }
+    .lab-stages button {
+      padding-inline: 11px;
+    }
+    .lab-stages button b {
+      display: none;
+    }
+  }
   .lab-stages button.on {
     background: var(--color-ink);
     color: var(--color-paper);
@@ -458,9 +484,7 @@
       height: 520px;
     }
     .lab-hud {
-      top: 24px;
-      left: 0;
-      right: auto;
+      margin-left: 0;
       text-align: left;
     }
     .lab-stages {
@@ -559,6 +583,14 @@
     font: 800 clamp(1.4rem, 1rem + 1.8vw, 2.6rem) / 1 var(--font-sans);
     letter-spacing: -0.02em;
   }
+  .ribbon-track small {
+    margin-left: 0.55em;
+    font: 600 0.4em/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: 0.5em;
+    color: var(--color-ink-soft);
+  }
   .ribbon-track i {
     flex: none;
     width: clamp(12px, 1.2vw, 18px);
@@ -617,8 +649,18 @@
     bottom: -44px;
     width: 58%;
     max-width: 320px;
-    opacity: 0.55;
+    opacity: 0.85;
     pointer-events: none;
+  }
+  /* On phones the copy runs the full width of the card, so the art steps back into the corner. */
+  @media (max-width: 559px) {
+    .card-art,
+    .kit-art {
+      right: -30px;
+      bottom: -30px;
+      width: 44%;
+      opacity: 0.6;
+    }
   }
   .card-top {
     position: relative;
@@ -891,6 +933,71 @@
     font: 800 clamp(7rem, 22vw, 11rem) / 1 var(--font-sans);
     letter-spacing: -0.06em;
     color: var(--color-ink);
+  }
+  /* The About photo: the same tilted card, with an object detector's box on the face */
+  .portrait {
+    position: relative;
+    justify-self: center;
+    width: min(100%, 380px);
+    aspect-ratio: 1;
+    margin: 0;
+    border-radius: 36px;
+    overflow: hidden;
+    rotate: -3deg;
+    background: var(--color-t-sky);
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      0 28px 60px -30px rgba(17, 19, 24, 0.55);
+  }
+  .portrait-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .portrait-scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -35%;
+    height: 35%;
+    background: linear-gradient(to bottom, rgba(152, 212, 35, 0), rgba(152, 212, 35, 0.4) 70%, rgba(152, 212, 35, 0.9) 72%, rgba(152, 212, 35, 0));
+    pointer-events: none;
+  }
+  .portrait.seen .portrait-scan {
+    animation: portrait-scan 1.2s var(--ease-move) forwards;
+  }
+  @keyframes portrait-scan {
+    to {
+      top: 100%;
+    }
+  }
+  .detect {
+    position: absolute;
+    border: 2.5px solid var(--color-lime);
+    border-radius: 8px;
+    box-shadow:
+      0 0 0 1px rgba(17, 19, 24, 0.35),
+      inset 0 0 0 1px rgba(17, 19, 24, 0.2);
+    transition:
+      opacity 0.3s var(--ease-move) 0.75s,
+      scale 0.7s var(--ease-pop) 0.75s;
+  }
+  html.js .portrait:not(.seen) .detect {
+    opacity: 0;
+    scale: 1.3;
+  }
+  .detect-label {
+    position: absolute;
+    left: -2.5px;
+    bottom: calc(100% + 2px);
+    padding: 5px 9px;
+    border-radius: 7px 7px 7px 2px;
+    background: var(--color-lime);
+    color: var(--color-ink);
+    font: 600 0.72rem/1 var(--font-mono);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
   }
   .monogram small {
     position: absolute;
@@ -1228,6 +1335,11 @@
     align-content: end;
     padding-top: 120px;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+  }
+  /* The footer is pinned behind the page, so browsers count it as on screen. While the HTML is still arriving it
+     fills in from the bottom up, which reads as a layout shift, so it stays hidden until the document is parsed. */
+  html.js:not(.ready) .footer {
+    visibility: hidden;
   }
   .footer-grid {
     display: grid;
@@ -1909,6 +2021,355 @@
 
 /* Motion layer (Phase 3). GSAP drives scroll and time; these rules cover states and hover. */
 @layer components {
+  /* Live card art. Each loop pauses off screen (LiveObserver adds .is-live). Negative delays start every element
+     mid-loop, and with no fill mode the resting frame is the finished picture, which reduced motion shows. */
+  .card-art *,
+  .kit-art * {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .card-art [class*='la-'],
+  .kit-art [class*='la-'] {
+    animation-play-state: paused;
+  }
+  .is-live [class*='la-'] {
+    animation-play-state: running;
+  }
+  .la-scan {
+    animation: la-scan 4.2s var(--ease-move) infinite;
+  }
+  @keyframes la-scan {
+    0% {
+      translate: 0 0;
+      opacity: 0;
+    }
+    6%,
+    70% {
+      opacity: 1;
+    }
+    70% {
+      translate: 0 96px;
+    }
+    80%,
+    100% {
+      translate: 0 96px;
+      opacity: 0;
+    }
+  }
+  .la-mark {
+    animation: la-mark 4.2s infinite;
+  }
+  .la-mark.m1 {
+    animation-delay: -3.75s;
+  }
+  .la-mark.m2 {
+    animation-delay: -3.2s;
+  }
+  .la-mark.m3 {
+    animation-delay: -2.65s;
+  }
+  .la-mark.m4 {
+    animation-delay: -2.1s;
+  }
+  .la-mark.m5 {
+    animation-delay: -1.55s;
+  }
+  @keyframes la-mark {
+    0% {
+      opacity: 0;
+      scale: 0.2;
+    }
+    6% {
+      opacity: 1;
+      scale: 1.3;
+    }
+    11%,
+    76% {
+      opacity: 1;
+      scale: 1;
+    }
+    86%,
+    100% {
+      opacity: 0;
+      scale: 1;
+    }
+  }
+  .la-seal {
+    animation: la-seal 4.2s var(--ease-pop) infinite;
+    animation-delay: -0.9s;
+  }
+  @keyframes la-seal {
+    0% {
+      scale: 0;
+    }
+    8%,
+    80% {
+      scale: 1;
+    }
+    90%,
+    100% {
+      scale: 0;
+    }
+  }
+  .la-msg {
+    animation: la-msg 4.8s linear infinite;
+  }
+  @keyframes la-msg {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    12.5%,
+    37.5%,
+    62.5%,
+    87.5% {
+      translate: 60px 48px;
+    }
+    25% {
+      translate: 118px -8px;
+    }
+    50% {
+      translate: 128px 80px;
+    }
+    75% {
+      translate: 12px 100px;
+    }
+  }
+  .la-node {
+    animation: la-node 4.8s infinite;
+  }
+  .la-node.n2 {
+    animation-delay: -3.6s;
+  }
+  .la-node.n3 {
+    animation-delay: -2.4s;
+  }
+  .la-node.n4 {
+    animation-delay: -1.2s;
+  }
+  @keyframes la-node {
+    0% {
+      scale: 1.4;
+    }
+    10%,
+    100% {
+      scale: 1;
+    }
+  }
+  .la-curve {
+    stroke-dasharray: 1;
+    animation: la-curve 4.6s var(--ease-move) infinite;
+  }
+  @keyframes la-curve {
+    0% {
+      stroke-dashoffset: 1;
+      opacity: 1;
+    }
+    60%,
+    88% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+  }
+  .la-end {
+    animation: la-end 4.6s infinite;
+  }
+  @keyframes la-end {
+    0%,
+    58% {
+      scale: 0;
+    }
+    66% {
+      scale: 1.45;
+    }
+    72%,
+    88% {
+      scale: 1;
+    }
+    100% {
+      scale: 0;
+    }
+  }
+  .la-tile {
+    animation: la-tile 5.4s infinite;
+  }
+  .la-tile.t1 {
+    animation-delay: -5.04s;
+  }
+  .la-tile.t2 {
+    animation-delay: -4.68s;
+  }
+  .la-tile.t3 {
+    animation-delay: -4.32s;
+  }
+  .la-tile.t4 {
+    animation-delay: -3.96s;
+  }
+  .la-tile.t5 {
+    animation-delay: -3.6s;
+  }
+  .la-tile.t6 {
+    animation-delay: -3.24s;
+  }
+  .la-tile.t7 {
+    animation-delay: -2.88s;
+  }
+  .la-tile.t8 {
+    animation-delay: -2.52s;
+  }
+  @keyframes la-tile {
+    0% {
+      opacity: 0;
+    }
+    8%,
+    82% {
+      opacity: 1;
+    }
+    92%,
+    100% {
+      opacity: 0;
+    }
+  }
+  .la-dot {
+    animation: la-dot 1.2s ease-in-out infinite;
+  }
+  .la-dot.d2 {
+    animation-delay: -1s;
+  }
+  .la-dot.d3 {
+    animation-delay: -0.8s;
+  }
+  @keyframes la-dot {
+    0%,
+    60%,
+    100% {
+      translate: 0 0;
+    }
+    30% {
+      translate: 0 -10px;
+    }
+  }
+  .la-brackets {
+    animation: la-lock 3s var(--ease-pop) infinite;
+  }
+  @keyframes la-lock {
+    0% {
+      scale: 1.14;
+      opacity: 0.4;
+    }
+    25%,
+    85% {
+      scale: 1;
+      opacity: 1;
+    }
+    100% {
+      scale: 1.14;
+      opacity: 0.4;
+    }
+  }
+  .la-target {
+    animation: la-target 3s infinite;
+  }
+  @keyframes la-target {
+    0%,
+    20% {
+      scale: 0.85;
+    }
+    30% {
+      scale: 1.08;
+    }
+    40%,
+    100% {
+      scale: 1;
+    }
+  }
+  .la-cvscan {
+    animation: la-cvscan 3s ease-in-out infinite;
+  }
+  @keyframes la-cvscan {
+    0% {
+      translate: 0 0;
+      opacity: 0;
+    }
+    10%,
+    80% {
+      opacity: 1;
+    }
+    80% {
+      translate: 0 114px;
+    }
+    90%,
+    100% {
+      translate: 0 114px;
+      opacity: 0;
+    }
+  }
+  .la-bar {
+    transform-origin: left center;
+    animation: la-bar 4.2s var(--ease-move) infinite;
+  }
+  .la-bar.b1 {
+    animation-delay: -3.3s;
+  }
+  .la-bar.b2 {
+    animation-delay: -2.4s;
+  }
+  @keyframes la-bar {
+    0% {
+      scale: 0 1;
+      opacity: 1;
+    }
+    30%,
+    85% {
+      scale: 1 1;
+      opacity: 1;
+    }
+    100% {
+      scale: 1 1;
+      opacity: 0;
+    }
+  }
+
+  /* Section readouts: a live-looking line under each heading, with real counts from content.ts */
+  .section-hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 14px 0 0;
+    /* Wrapped lines start under the first item, not under the dot. */
+    padding-left: 18px;
+    font: 600 0.74rem/1.4 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+  .section-hud b {
+    flex: none;
+    margin-left: -18px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--hud, var(--color-lime-d));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hud, var(--color-lime-d)) 22%, transparent);
+    animation: hud-blink 2.4s ease-in-out infinite;
+  }
+  @keyframes hud-blink {
+    50% {
+      opacity: 0.35;
+    }
+  }
+  /* The separator trails its item, so a wrapped line never starts with one. */
+  .section-hud span:not(:last-of-type)::after {
+    content: '·';
+    margin-left: 10px;
+    opacity: 0.45;
+  }
+
   /* The skip link focuses <main> itself; the jump is the feedback, so no ring around the whole page. */
   main[tabindex='-1']:focus {
     outline: none;

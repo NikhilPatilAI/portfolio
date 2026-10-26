@@ -1,9 +1,14 @@
 import Link from 'next/link';
 import { ViewTransition } from 'react';
 import { CardArt } from '@/components/art';
+import { LiveObserver } from '@/components/live-observer';
 import { RichText } from '@/components/rich-text';
-import { projects, sections } from '@/data/content';
+import { SectionHud } from '@/components/section-hud';
+import { cardReceipts, projects, sections } from '@/data/content';
 import { tint } from '@/lib/style';
+
+// Numbers on the cards that open a receipt.
+const proofs = new Set(projects.flatMap(cardReceipts)).size;
 
 export function Work() {
   return (
@@ -17,6 +22,7 @@ export function Work() {
             {sections.work.title}
           </h2>
           <p className="section-sub">{sections.work.sub}</p>
+          <SectionHud hue="sky" items={[`${projects.length} projects`, `${proofs} receipts`, `${projects.filter((p) => p.status === 'Open source').length} open source`]} />
         </div>
         <ul className="cards">
           {projects.map((p) => (
@@ -55,6 +61,7 @@ export function Work() {
             </li>
           ))}
         </ul>
+        <LiveObserver selector="#work .card-art" />
       </div>
     </section>
   );

@@ -1,7 +1,13 @@
 import Image from 'next/image';
 import { ReceiptButton } from '@/components/rich-text';
+import { SectionHud } from '@/components/section-hud';
 import { podcast, sections } from '@/data/content';
 import { tint } from '@/lib/style';
+
+const month = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+const first = podcast.episodes[0].date;
+const last = podcast.episodes[podcast.episodes.length - 1].date;
+const weeks = Math.round((Date.parse(last) - Date.parse(first)) / (7 * 864e5));
 
 function Play() {
   return (
@@ -27,6 +33,7 @@ export function Teaching() {
           <p className="section-sub">
             {podcast.about} <ReceiptButton id="eps" text="28 episodes" />, {podcast.total} of listening in all.
           </p>
+          <SectionHud hue="iris" items={[`${month(first)} to ${month(last)}`, `${podcast.episodes.length} episodes in ${weeks} weeks`, 'Hinglish']} />
           <div className="teach-links">
             {podcast.links.map((link) => (
               <a key={link.label} className="chip" href={link.href} target="_blank" rel="noopener" style={tint(link.hue)}>

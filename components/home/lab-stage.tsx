@@ -44,11 +44,13 @@ export function LabStage() {
     <div className="lab" ref={root}>
       <p className="sr-only">A small live model beside the name walks through six steps of how AI works: embedding, attention, a forward pass, training, optimization and generation.</p>
       <canvas className="lab-canvas" aria-hidden="true" />
-      <p className="lab-cap" aria-hidden="true">
-        <b />
-        Live · a tiny model, showing its work
-      </p>
-      <p className="lab-hud" aria-hidden="true" />
+      <div className="lab-top" aria-hidden="true">
+        <p className="lab-cap">
+          <b />
+          Live · a tiny model, showing its work
+        </p>
+        <p className="lab-hud" />
+      </div>
       <div className="lab-stages" role="group" aria-label="Steps of the live model">
         {STAGES.map((name, i) => (
           <button key={name} type="button" data-stage={i} aria-pressed={i === 0} className={i === 0 ? 'on' : undefined}>

@@ -31,7 +31,7 @@ const parts = [
     title: 'A live model in the hero, with no library',
     hue: 'mint',
     body: [
-      'The lab beside my name is about 9 KB of my own code, gzipped, drawing on a plain 2D canvas. A real 2-12-12-1 network trains with Adam on every frame, attention is computed as softmax(QKᵀ / √d), and SGD, Momentum and Adam descend a real loss surface. No machine learning, 3D or animation library ships for it.',
+      'The lab beside my name is about 10 KB of my own code, gzipped, drawing on a plain 2D canvas. A real 2-12-12-1 network trains with Adam on every frame, attention is computed as softmax(QKᵀ / √d), and SGD, Momentum and Adam descend a real loss surface. No machine learning, 3D or animation library ships for it.',
       'My name is plain HTML text with nothing behind it, so it paints first. With reduced motion the lab shows still frames you can step through, and without JavaScript the page simply leaves it out.',
     ],
   },
@@ -41,13 +41,14 @@ const parts = [
     body: [
       'Every page is prerendered at build time. The podcast covers load only as they near the screen, and receipts and glosses use the browser\'s built-in popovers, so they work even before JavaScript loads.',
       'Smooth scrolling, scroll reveals and the custom cursor load on your first move, so the first seconds go to the content.',
+      'The little loops on the project and tool cards are plain SVG and CSS, and they only run while they are on screen.',
     ],
   },
   {
     title: 'Measured, not promised',
     hue: 'iris',
     body: [
-      'Lighthouse on a simulated mid-range phone: Performance 94 on the home page and 94 to 96 on the others, with Accessibility, Best Practices and SEO at 100 and no layout shift.',
+      'Lighthouse on a simulated mid-range phone: Performance 94 on the home page and 95 to 97 on the others, with Accessibility, Best Practices and SEO at 100 and no layout shift.',
     ],
   },
 ] as const;

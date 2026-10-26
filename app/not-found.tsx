@@ -23,7 +23,8 @@ export default function NotFound() {
             </span>
           </span>
         </h1>
-        <p className="section-sub">This page got lost in the paint.</p>
+        {/* DRAFT. The same rule as Legal Bot: when there is no match, don't guess. */}
+        <p className="section-sub">Nothing lives at this address. Rather than guess, here are three pages that do.</p>
         <div className="hero-ctas">
           <Link className="btn btn-ink" href="/">
             Back home

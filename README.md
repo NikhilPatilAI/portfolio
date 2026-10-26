@@ -14,12 +14,12 @@ The personal site of Nikhil Patil, AI/ML engineer in Mumbai: projects with recei
 
 `lib/lab.ts` draws a small live model on a 2D canvas, with no libraries. About 900 particles morph through six stages:
 
-1. **Embed:** skills and projects as a 3D embedding space; the cursor is the query and retrieves the top five.
+1. **Embed:** skills and projects as a 3D embedding space; the cursor is the query and its four nearest documents come back ranked.
 2. **Attend:** particles stream along attention weights, computed as softmax(QKᵀ / √d) over seeded embeddings.
 3. **Fire:** a 4-7-7-4 network passes signals forward.
 4. **Learn:** a real 2-12-12-1 network trains with Adam on every frame; its decision boundary is made of particles.
 5. **Descend:** SGD, Momentum and Adam race down a rotating loss surface.
-6. **Generate:** diffusion samples the NP monogram out of noise in 40 steps.
+6. **Generate:** diffusion samples a brain out of noise in 40 steps, then its neurons fire.
 
 The name is plain HTML in one ink color and nothing plays behind it. With reduced motion the lab shows still frames; without JavaScript it is left out.
 

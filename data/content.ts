@@ -52,7 +52,7 @@ export const sections = {
   contact: { tag: 'Contact', title: "Let's talk." },
 };
 
-/** Words on the two crossing ribbons. They repeat what the Stack section lists. */
+/** Words on the first ribbon. They repeat what the Stack section lists. The second ribbon carries the numbers from the receipts. */
 export const ribbonWords = ['Verified RAG', 'Multi-agent systems', 'Fine-tuning', 'Computer vision', 'Edge AI', 'MLOps on Azure', 'Teaching AI in Hinglish'] as const;
 
 export const socials = {
@@ -641,6 +641,11 @@ export const projects: Project[] = [
   },
 ];
 
+/** The receipts a project's card opens, in reading order. */
+export function cardReceipts(p: Project): ReceiptId[] {
+  return [...new Set([...p.kicker, ...p.line].flatMap((s) => (typeof s === 'object' && 'receipt' in s ? [s.receipt] : [])))];
+}
+
 export interface Role {
   role: string;
   org: string;
@@ -752,8 +757,12 @@ export const about = [
   'At Ind-Zone I train and deploy ML models for a retail automation product. Outside it, I publish open-source LLM projects and take on production work by contract.',
 ];
 
-// TODO: ask Nikhil for a portrait photo. Until then the About section shows a monogram.
-export const portrait: { src: string; alt: string } | null = null;
+// His LinkedIn profile photo (800 px). face is the detection box drawn over it, in percent of the image.
+export const portrait: { src: string; alt: string; face: { x: number; y: number; w: number; h: number } } | null = {
+  src: '/nikhil-patil.jpg',
+  alt: 'Nikhil Patil in a dark blazer and white shirt',
+  face: { x: 29.5, y: 16.5, w: 47, h: 56 },
+};
 
 export const beyond = [
   {

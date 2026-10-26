@@ -187,7 +187,7 @@ function reveals() {
   });
 
   // About: the portrait (or monogram) is revealed through a mask, then the three lines follow.
-  offScreen('.monogram').forEach((monogram) => {
+  offScreen('.monogram, .portrait').forEach((monogram) => {
     gsap.fromTo(monogram, { clipPath: 'inset(100% 0% 0% 0% round 36px)', scale: 1.08 }, { clipPath: 'inset(0% 0% 0% 0% round 36px)', scale: 1, duration: 1.2, ease: 'expo.out', clearProps: 'clipPath,transform', scrollTrigger: { trigger: monogram, start: 'top 85%', once: true } });
   });
   const aboutLines = offScreen('.about-lines li');

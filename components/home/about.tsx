@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import { about, portrait, sections } from '@/data/content';
 import { tint } from '@/lib/style';
 import type { Hue } from '@/data/content';
+import { Portrait } from './portrait';
 
 const dots: Hue[] = ['sky', 'grape', 'mint'];
 
@@ -10,7 +10,7 @@ export function About() {
     <section className="section gutter" id="about" aria-labelledby="aboutTitle" data-cur="var(--color-grape-d)">
       <div className="inner about">
         {portrait ? (
-          <Image className="monogram" src={portrait.src} alt={portrait.alt} width={760} height={760} sizes="(max-width: 900px) 90vw, 380px" />
+          <Portrait src={portrait.src} alt={portrait.alt} face={portrait.face} />
         ) : (
           <div className="monogram" aria-hidden="true">
             <span>NP</span>

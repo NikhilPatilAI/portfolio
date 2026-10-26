@@ -1,24 +1,44 @@
-import { ribbonWords } from '@/data/content';
+import { cardReceipts, podcast, projects, receipts, ribbonWords } from '@/data/content';
 
-function Track({ words }: { words: readonly string[] }) {
-  // Two copies, so the band still fills wide screens once Phase 3 sets it moving.
-  const doubled = [...words, ...words];
+type Item = string | { fig: string; from: string };
+
+// Every number on the project cards with the project it belongs to, then the podcast's episode count.
+const numbers: Item[] = [
+  ...projects.flatMap((p) => cardReceipts(p).map((id) => ({ fig: receipts[id].fig, from: p.title }))),
+  { fig: receipts.eps.fig, from: podcast.name },
+];
+
+function Track({ items }: { items: readonly Item[] }) {
+  // Two copies, so the moving band loops without a gap.
+  const doubled = [...items, ...items];
   return (
     <div className="ribbon-track">
-      {doubled.flatMap((word, i) => [<span key={`w${i}`}>{word}</span>, <i key={`d${i}`} />])}
+      {doubled.flatMap((item, i) => [
+        <span key={`w${i}`}>
+          {typeof item === 'string' ? (
+            item
+          ) : (
+            <>
+              {item.fig}
+              <small>{item.from}</small>
+            </>
+          )}
+        </span>,
+        <i key={`d${i}`} />,
+      ])}
     </div>
   );
 }
 
-/** Two crossing bands between the hero and the work. Decorative; the same words appear in the Stack section. */
+/** Two crossing bands between the hero and the work: what I build, then the numbers behind it. Decorative; every word and number also appears in the sections below. */
 export function Ribbons() {
   return (
     <div className="ribbons" aria-hidden="true">
       <div className="ribbon ribbon-a">
-        <Track words={ribbonWords} />
+        <Track items={ribbonWords} />
       </div>
       <div className="ribbon ribbon-b">
-        <Track words={[...ribbonWords].reverse()} />
+        <Track items={numbers} />
       </div>
     </div>
   );
