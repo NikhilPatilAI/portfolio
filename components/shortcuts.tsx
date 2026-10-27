@@ -6,6 +6,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { site } from '@/data/content';
 import { toggleMotion } from '@/lib/motion-pref';
 import { track } from '@/lib/track';
+import { AskButton } from './ask-button';
 
 // The palette's code loads only when someone opens it.
 const CommandPalette = dynamic(() => import('./command-palette'), { ssr: false });
@@ -16,7 +17,10 @@ const typing = (el: EventTarget | null) => el instanceof HTMLElement && (el.isCo
 
 let greeted = false;
 
-/** Keyboard shortcuts for the whole site: ⌘K or Ctrl+K, ?, A, Q and M. Also says hello in the console, once per visit. */
+/**
+ * Keyboard shortcuts for the whole site: ⌘K or Ctrl+K, ?, A, Q and M, plus the Ask Nikhil button for everyone without
+ * a keyboard. Also says hello in the console, once per visit.
+ */
 export function Shortcuts() {
   const [mode, setMode] = useState<PaletteMode | null>(null);
   const router = useRouter();
@@ -67,7 +71,12 @@ export function Shortcuts() {
     };
   }, [mode, router]);
 
-  return mode ? <CommandPalette mode={mode} onMode={setMode} onClose={() => setMode(null)} /> : null;
+  return (
+    <>
+      <AskButton away={mode !== null} onOpen={() => setMode('ask')} />
+      {mode ? <CommandPalette mode={mode} onMode={setMode} onClose={() => setMode(null)} /> : null}
+    </>
+  );
 }
 
 const noSubscribe = () => () => {};

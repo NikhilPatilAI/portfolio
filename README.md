@@ -25,7 +25,7 @@ The name is plain HTML in one ink color and nothing plays behind it. With reduce
 
 ## Ask Nikhil
 
-The command palette (⌘K or Ctrl+K, or the A key) answers questions about Nikhil with NVIDIA Nemotron 3 Super, a free open model, through OpenRouter, using only this site's content. `lib/ask/knowledge.ts` turns `data/content.ts` into about 8,000 tokens of plain text that sits in a cached system prompt, so there is no vector database. `app/api/ask/route.ts` streams the answer back, and links in answers render only when they point to the site's own pages or links it already shows (`lib/ask/links.ts`).
+The Ask Nikhil button in the bottom corner of every page (also the A key, or the first command in the ⌘K or Ctrl+K palette) answers questions about Nikhil with NVIDIA Nemotron 3 Super, a free open model, through OpenRouter, using only this site's content. `lib/ask/knowledge.ts` turns `data/content.ts` into about 8,000 tokens of plain text that sits in a cached system prompt, so there is no vector database. `app/api/ask/route.ts` streams the answer back, and links in answers render only when they point to the site's own pages or links it already shows (`lib/ask/links.ts`).
 
 - **Switch it on:** create a key at openrouter.ai/settings/keys, add it as `OPENROUTER_API_KEY` in Vercel (Project Settings, Environment Variables, Production) and redeploy. Without it the palette says it isn't switched on yet.
 - **Models:** `nvidia/nemotron-3-super-120b-a12b:free` first, then `nvidia/nemotron-3.5-super-vl:free` and `nvidia/nemotron-3.5-lightning:free` when it is busy. `ASK_MODEL` puts another OpenRouter model at the front.

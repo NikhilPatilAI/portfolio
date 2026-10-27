@@ -15,7 +15,7 @@ const parts = [
     title: 'One file holds every word',
     hue: 'sky',
     body: [
-      'Every project, number, role and episode lives in data/content.ts. The Story page, Quick view, the resume, the metadata and, later, the Ask Nikhil assistant all read from it, so a change lands everywhere at once.',
+      'Every project, number, role and episode lives in data/content.ts. The Story page, Quick view, the resume, the metadata and the Ask Nikhil assistant all read from it, so a change lands everywhere at once.',
       'Every number in that file points back to a results file, a README or my resume. If it cannot be traced, it does not ship.',
     ],
   },
@@ -40,7 +40,7 @@ const parts = [
     title: 'Ask Nikhil, from this site only',
     hue: 'grape',
     body: [
-      'The command palette answers questions about me with NVIDIA Nemotron, a free open model, through OpenRouter. It reads only what this site says, about 8,000 tokens in its prompt, so there is no vector database to drift out of date.',
+      'The button with my glasses, in the corner of every page, answers questions about me with NVIDIA Nemotron, a free open model, through OpenRouter. It reads only what this site says, about 8,000 tokens in its prompt, so there is no vector database to drift out of date.',
       'Answers stream in, carry an AI label, link only to pages that exist, and point to my email instead of guessing. Each visitor gets a few questions every ten minutes, and the whole site has a daily ceiling.',
     ],
   },

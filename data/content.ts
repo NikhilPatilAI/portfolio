@@ -1,4 +1,4 @@
-// One source of truth for the site, Quick view, /resume, metadata and, later, the Ask Nikhil assistant.
+// One source of truth for the site, Quick view, /resume, metadata and the Ask Nikhil assistant.
 // Every number traces to the metrics ledger in data/profile-research.md (section 10). Never add one that doesn't.
 // Copy marked // DRAFT was written by Claude from your sources. Rewrite it in your own voice.
 // Privacy: no phone, address, date of birth, salary or notice period anywhere in this file. No SmartCart details.
