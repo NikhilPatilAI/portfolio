@@ -23,12 +23,9 @@ const clip = (s: string, n = 26) => (s.length > n ? `${s.slice(0, n - 1).trimEnd
 
 // DRAFT. What each agent builds, and what the log says while it does.
 const JOBS: Job[] = [
-  ['.hero-name', PLANNER, 'type', (el) => `writing "${clip(text(el))}"`],
-  ['.hero-tagline', PLANNER, 'type', () => 'writing the tagline'],
   ['.section-title', PLANNER, 'type', (el) => `writing "${clip(text(el))}"`],
   ['.section-sub', PLANNER, 'type', () => 'writing the intro'],
   ['.about-lines li', PLANNER, 'type', () => 'writing a line about Nikhil'],
-  ['.hero-ctas .btn', CODER, 'pop', (el) => `adding the ${clip(text(el).replace(/[↓↗]/g, '').trim())} button`],
   ['.card', CODER, 'pop', (el) => `placing ${clip(text(el, '.card-title'))}`],
   ['.kit', CODER, 'pop', (el) => `packing ${clip(text(el, '.kit-title'))}`],
   ['.timeline > li', CODER, 'pop', (el) => `adding ${clip(text(el, '.timeline-role'))}`],
@@ -221,6 +218,8 @@ export function startCrew(main: HTMLElement) {
   for (const section of sections) {
     const found = partsOf(section);
     if (!found.length) continue;
+    // The hero's name and buttons are on the page from the first paint, so no sheet is laid over them.
+    if (section.matches('.hero')) continue;
     const sheet = document.createElement('div');
     sheet.className = 'crew-sheet';
     sheet.setAttribute('aria-hidden', 'true');

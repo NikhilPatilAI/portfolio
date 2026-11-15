@@ -3357,8 +3357,9 @@
     }
   }
   /* Build crew (lib/crew.ts): on a first visit the Story page paints as a wireframe, each part a dashed outline,
-     until an agent builds it and marks it data-built. The selector list matches JOBS in lib/crew.ts. */
-  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built]) {
+     until an agent builds it and marks it data-built. The name, tagline and hero buttons are never
+     held back: they are the first thing a visitor needs, and waiting for the crew's code cost slow phones 3 seconds. The selector list matches JOBS in lib/crew.ts. */
+  html.crew [data-crew] :is(.lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built]) {
     color: transparent !important;
     background: transparent !important;
     box-shadow: none !important;
@@ -3367,9 +3368,9 @@
     border-radius: 6px;
     pointer-events: none;
   }
-  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built]) *,
-  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built])::before,
-  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built])::after {
+  html.crew [data-crew] :is(.lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built]) *,
+  html.crew [data-crew] :is(.lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built])::before,
+  html.crew [data-crew] :is(.lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built])::after {
     visibility: hidden !important;
   }
   /* The blueprint: a drawing sheet with a fine and a coarse grid lies over each unbuilt section, above its color and
