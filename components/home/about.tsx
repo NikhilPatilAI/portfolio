@@ -7,7 +7,7 @@ const dots: Hue[] = ['sky', 'grape', 'mint'];
 
 export function About() {
   return (
-    <section className="section gutter" id="about" aria-labelledby="aboutTitle" data-cur="var(--color-grape-d)">
+    <section className="section gutter" id="about" aria-labelledby="aboutTitle" style={{ background: 'var(--color-paper)' }} data-cur="var(--color-grape-d)">
       <div className="inner about">
         {portrait ? (
           <Portrait src={portrait.src} alt={portrait.alt} face={portrait.face} />

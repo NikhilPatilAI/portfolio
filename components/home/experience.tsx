@@ -8,7 +8,7 @@ const onAzure = experience.every((r) => r.summary.includes('Azure'));
 
 export function Experience() {
   return (
-    <section className="section gutter" id="experience" aria-labelledby="experienceTitle" style={{ background: 'var(--color-t-mint)' }} data-cur="var(--color-mint-d)">
+    <section className="section gutter" id="experience" aria-labelledby="experienceTitle" style={{ background: 'var(--color-b-mint)' }} data-cur="var(--color-mint-d)">
       <div className="inner">
         <div className="section-head">
           <span className="tag" style={tint('mint')}>
@@ -22,8 +22,8 @@ export function Experience() {
         </div>
         <ol className="timeline">
           {experience.map((r) => (
-            <li key={r.org}>
-              <p className="timeline-when" style={tint(r.hue)}>
+            <li key={r.org} style={tint(r.hue)}>
+              <p className="timeline-when">
                 <i aria-hidden="true" />
                 {r.start} to {r.end}
               </p>

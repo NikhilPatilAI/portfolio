@@ -265,6 +265,8 @@ type From = (i: number) => Record<string, string | number>;
 type Stagger = number | ((i: number, el: Element, all: Element[]) => number);
 
 function reveals(cleanups: Array<() => void>) {
+  // On a visit where the build crew (lib/crew.ts) assembles the Story page, the arrivals are its job.
+  if (live('[data-crew="run"]').length) return;
   // Web Animations on translate, scale, rotate and opacity run on the compositor, so a section full of items
   // arriving costs the main thread nothing per frame. Tweening them from script repainted the page on every frame.
   const running = new Set<Animation>();

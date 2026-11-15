@@ -54,6 +54,10 @@
   --color-t-grape: #f5ecff;
   --color-t-rose: #ffe8f3;
 
+  /* Block strength: a whole section's background. Strong enough to own the screen, light enough for ink text (8:1 or better). */
+  --color-b-mint: #6fe3b4;
+  --color-b-sky: #86d3ff;
+
   --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-move: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1172,6 +1176,132 @@
     color: var(--color-ink-soft);
   }
 
+  /* Bolder Experience: each role is a sticker card in its own color, with an ink outline, a hard offset shadow like
+     the sign-off letters, a colored date pill and a large outlined number. Education and certifications match. */
+  .timeline {
+    gap: 30px;
+    border-top: 0;
+    counter-reset: role;
+  }
+  .timeline::before {
+    display: none;
+  }
+  .timeline > li {
+    position: relative;
+    overflow: hidden;
+    counter-increment: role;
+    align-items: start;
+    padding: clamp(22px, 3vw, 34px);
+    padding-right: clamp(22px, 15vw, 230px);
+    border: 0;
+    border-radius: 28px;
+    background: var(--color-paper);
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      8px 8px 0 0 var(--c),
+      8px 8px 0 2px var(--color-ink);
+    transition:
+      translate 0.35s var(--ease-pop),
+      box-shadow 0.35s var(--ease-pop);
+  }
+  .timeline > li:hover {
+    translate: -4px -4px;
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      14px 14px 0 0 var(--c),
+      14px 14px 0 2px var(--color-ink);
+  }
+  .timeline > li::after {
+    content: '0' counter(role);
+    position: absolute;
+    right: clamp(14px, 2.4vw, 32px);
+    top: 50%;
+    translate: 0 -50%;
+    font: 800 clamp(3.4rem, 2rem + 7vw, 8.5rem) / 1 var(--font-sans);
+    letter-spacing: -0.05em;
+    color: var(--c);
+    -webkit-text-stroke: 2px var(--color-ink);
+    paint-order: stroke fill;
+    pointer-events: none;
+  }
+  .timeline-when {
+    justify-self: start;
+    margin: 4px 0 0;
+    padding: 9px 14px;
+    white-space: nowrap;
+    border-radius: 999px;
+    background: var(--c);
+    box-shadow: 0 0 0 2px var(--color-ink);
+  }
+  .timeline-when i {
+    background: var(--color-paper);
+  }
+  .timeline-role {
+    font-size: clamp(1.6rem, 1.2rem + 1.7vw, 2.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
+  .timeline-org {
+    margin: 6px 0 0;
+    font-size: 1.05rem;
+  }
+  .timeline-summary {
+    font-size: 1.05rem;
+  }
+  .timeline-link {
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    text-decoration: none;
+  }
+  @media (max-width: 699px) {
+    .timeline > li {
+      padding-right: clamp(22px, 3vw, 34px);
+    }
+    .timeline > li::after {
+      top: 14px;
+      translate: none;
+      font-size: 3rem;
+      opacity: 0.9;
+    }
+  }
+  @media (min-width: 800px) {
+    .timeline > li {
+      grid-template-columns: 250px minmax(0, 1fr);
+    }
+  }
+  .creds {
+    gap: 26px;
+    margin-top: clamp(34px, 4vw, 52px);
+  }
+  .cred {
+    padding: 26px 28px;
+    border-radius: 28px;
+    background: var(--color-sun);
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      8px 8px 0 0 var(--color-ink);
+  }
+  .cred + .cred {
+    background: var(--color-iris);
+  }
+  .cred h3 {
+    font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem);
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+  }
+  .cred li span {
+    color: var(--color-ink);
+  }
+  /* Bolder About: the photo sits on a solid grape block with an ink outline. */
+  .portrait {
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      16px 16px 0 0 var(--color-grape),
+      16px 16px 0 2px var(--color-ink);
+  }
+
   /* Tool cards */
   .kits {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
@@ -2074,6 +2204,120 @@
       font-size: 0.8rem;
     }
   }
+  /* The loud pass. Every section is a block of strong color with rounded shoulders that overlaps the one before, like
+     a stack of cards. Every card is a sticker: ink outline, hard ink shadow. Tags are ink. */
+  [data-crew] .section {
+    position: relative;
+    margin-top: -44px;
+    border-radius: 44px 44px 0 0;
+    padding-top: calc(clamp(84px, 11vw, 150px) + 12px);
+    box-shadow: 0 -2px 0 0 var(--color-ink);
+  }
+  [data-crew] .section:last-of-type {
+    padding-bottom: calc(clamp(84px, 11vw, 150px) + 44px);
+  }
+  [data-crew] > .crew-sheet,
+  [data-crew] .section > .crew-sheet {
+    border-radius: inherit;
+  }
+  [data-crew] .section .tag {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    padding: 9px 14px;
+  }
+  [data-crew] .section-sub {
+    color: var(--color-ink);
+    font-weight: 700;
+  }
+  [data-crew] .section-hud {
+    color: var(--color-ink);
+    --hud: var(--color-ink);
+  }
+  .card,
+  .kit,
+  .beyond li {
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      10px 10px 0 0 var(--color-ink);
+  }
+  .beyond li {
+    transition:
+      translate 0.35s var(--ease-pop),
+      box-shadow 0.35s var(--ease-pop);
+  }
+  .beyond li:hover {
+    translate: -4px -4px;
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      16px 16px 0 0 var(--color-ink);
+  }
+  .cards,
+  .kits,
+  .beyond {
+    gap: clamp(22px, 2.6vw, 34px);
+  }
+  .ep-cover {
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      5px 5px 0 0 var(--color-ink);
+  }
+  .about-lines li {
+    padding: 18px 22px;
+    border-radius: 22px;
+    background: var(--color-paper);
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      6px 6px 0 0 var(--color-ink);
+  }
+  .portrait {
+    box-shadow:
+      0 0 0 2px var(--color-ink),
+      16px 16px 0 0 var(--color-sun),
+      16px 16px 0 2px var(--color-ink);
+  }
+  .cred {
+    background: var(--color-sun);
+  }
+  .cred + .cred {
+    background: var(--color-rose);
+  }
+  /* A rainbow line across the top fills as the page is read, and each heading is underlined in ink as it scrolls
+     into view. Both follow the scroll position itself, so they cost nothing per frame; without support they rest. */
+  .read-bar {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 41;
+    height: 5px;
+    background: var(--rainbow);
+    transform-origin: left center;
+    scale: 0 1;
+    pointer-events: none;
+  }
+  @supports (animation-timeline: scroll()) {
+    .read-bar {
+      animation: read-bar linear both;
+      animation-timeline: scroll(root);
+    }
+    [data-crew] .section-title {
+      justify-self: start;
+      padding-bottom: 0.08em;
+      background: linear-gradient(var(--color-ink), var(--color-ink)) no-repeat 0 100% / 0% 0.07em;
+      animation: title-rule linear both;
+      animation-timeline: view();
+      animation-range: entry 60% cover 38%;
+    }
+  }
+  @keyframes read-bar {
+    to {
+      scale: 1 1;
+    }
+  }
+  @keyframes title-rule {
+    to {
+      background-size: 100% 0.07em;
+    }
+  }
+
 }
 
 /* Motion layer (Phase 3). GSAP drives scroll and time; these rules cover states and hover. */
@@ -3112,6 +3356,174 @@
       box-shadow: 0 0 0 2px var(--color-paper);
     }
   }
+  /* Build crew (lib/crew.ts): on a first visit the Story page paints as a wireframe, each part a dashed outline,
+     until an agent builds it and marks it data-built. The selector list matches JOBS in lib/crew.ts. */
+  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built]) {
+    color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: 1.5px dashed rgba(1, 113, 163, 0.55);
+    outline-offset: 2px;
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built]) *,
+  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built])::before,
+  html.crew [data-crew] :is(.hero-name, .hero-tagline, .hero-ctas .btn, .lab, .meta .chip, .tag, .section-title, .section-sub, .section-hud, .card, .kit, .portrait, .monogram, .about-lines li, .timeline > li, .cred, .teach-links, .eps, .beyond > li):not([data-built])::after {
+    visibility: hidden !important;
+  }
+  /* The blueprint: a drawing sheet with a fine and a coarse grid lies over each unbuilt section, above its color and
+     under its content. When the section is done a hole opens in the sheet from the Reviewer's cursor (--fx, --fy, --fr). */
+  html.crew [data-crew] .section {
+    position: relative;
+  }
+  html.crew [data-crew] .section > .inner,
+  html.crew [data-crew] .hero-inner {
+    position: relative;
+    z-index: 1;
+  }
+  .crew-sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(rgba(1, 113, 163, 0.16) 1px, transparent 1px) 0 0 / 120px 120px,
+      linear-gradient(90deg, rgba(1, 113, 163, 0.16) 1px, transparent 1px) 0 0 / 120px 120px,
+      linear-gradient(rgba(1, 113, 163, 0.07) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, rgba(1, 113, 163, 0.07) 1px, transparent 1px) 0 0 / 24px 24px,
+      #f3f9fd;
+    -webkit-mask-image: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), transparent var(--fr, 0px), #000 calc(var(--fr, 0px) + 1px));
+    mask-image: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), transparent var(--fr, 0px), #000 calc(var(--fr, 0px) + 1px));
+  }
+  /* Measurements, the way a drawing labels each box. */
+  [data-dim]:not([data-built]) {
+    position: relative;
+  }
+  html.crew [data-crew] [data-dim][data-dim][data-dim]:not([data-built])::after {
+    content: attr(data-dim);
+    visibility: visible !important;
+    position: absolute;
+    inset: 6px auto auto 8px;
+    width: auto;
+    height: auto;
+    translate: none;
+    background: none;
+    animation: none;
+    font: 600 0.62rem/1 var(--font-mono);
+    letter-spacing: 0.06em;
+    color: rgba(1, 113, 163, 0.8);
+    white-space: nowrap;
+    -webkit-text-stroke: 0;
+    text-shadow: none;
+  }
+  /* The agents' cursors travel with the page, so the layer is laid over the document, not the window. */
+  #crew {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .crew-cur {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: flex-start;
+    opacity: 0;
+    will-change: transform;
+    transition: opacity 0.3s var(--ease-move);
+  }
+  .crew-cur.is-on {
+    opacity: 1;
+  }
+  .crew-cur svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    fill: var(--a);
+    stroke: var(--color-ink);
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+  }
+  .crew-cur span {
+    margin: 14px 0 0 -3px;
+    padding: 4px 9px;
+    border-radius: 4px 999px 999px 999px;
+    background: var(--a);
+    box-shadow: 0 0 0 1.4px var(--color-ink);
+    color: var(--color-ink);
+    font: 600 0.72rem/1 var(--font-mono);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  #crew-log {
+    position: fixed;
+    left: max(24px, var(--gutter-l));
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 44;
+    width: min(330px, calc(100vw - 32px));
+    padding: 12px 14px;
+    border-radius: 18px;
+    background: var(--color-paper);
+    box-shadow:
+      0 0 0 1.5px var(--color-ink),
+      0 14px 30px -14px rgba(17, 19, 24, 0.5);
+    font: 600 0.72rem/1.4 var(--font-mono);
+    transition: opacity 0.5s var(--ease-move) 1s;
+  }
+  #crew-log.is-done {
+    opacity: 0;
+  }
+  .crew-log-title {
+    margin: 0 0 6px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+  }
+  #crew-log ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-height: 4.2em;
+    display: grid;
+    align-content: end;
+  }
+  #crew-log li {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    opacity: 0.45;
+  }
+  #crew-log li:last-child {
+    opacity: 1;
+  }
+  #crew-log li i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: var(--a);
+    box-shadow: 0 0 0 1.2px var(--color-ink);
+  }
+  @media (max-width: 699px) {
+    #crew-log {
+      left: var(--gutter-l);
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+      width: min(250px, calc(100vw - 104px));
+      padding: 10px 12px;
+    }
+    /* A phone has room for one line: the latest. */
+    .crew-log-title,
+    #crew-log li:not(:last-child) {
+      display: none;
+    }
+    #crew-log ol {
+      min-height: 0;
+    }
+  }
   .shortcut-list {
     display: grid;
     gap: 2px;
@@ -3321,7 +3733,10 @@ html[data-motion='reduce']::view-transition-new(*) {
   }
   .topbar,
   .view-toggle,
+  .read-bar,
   .ask-fab,
+  #crew,
+  #crew-log,
   .resume-bar,
   .skip,
   .footer,

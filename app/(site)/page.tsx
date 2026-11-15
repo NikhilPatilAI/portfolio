@@ -7,6 +7,7 @@ import { Ribbons } from '@/components/home/ribbons';
 import { Stack } from '@/components/home/stack';
 import { Teaching } from '@/components/home/teaching';
 import { Work } from '@/components/home/work';
+import { Crew, crewScript } from '@/components/crew';
 import { LiveObserver } from '@/components/live-observer';
 import { PageFrame } from '@/components/page-frame';
 import { SiteHeader } from '@/components/site-header';
@@ -22,9 +23,12 @@ export default function StoryPage() {
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: rememberView }} />
+      <script dangerouslySetInnerHTML={{ __html: crewScript }} />
       <SiteHeader view="story" />
       <PageFrame>
-        <main id="content">
+        <main id="content" data-crew="">
+          <div className="read-bar" aria-hidden="true" />
+          <Crew />
           <Hero />
           <Ribbons />
           <Work />
